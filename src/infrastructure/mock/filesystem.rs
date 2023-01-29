@@ -1,7 +1,8 @@
 use std::{
     collections::BTreeMap,
     sync::RwLock,
-    path::Path
+    path::Path,
+    io::{ Cursor, Read }
 };
 use crate::{ Result, path::NormalizedPath, port::{FileSystem, ReadOnlyFileSystem, TmpDir} };
 
@@ -35,6 +36,17 @@ impl ReadOnlyFileSystem for FileSystemMock {
             .get(&NormalizedPath::from(path.as_ref()))
             .map(|node| match node {
                 Node::File(content) => Ok(String::from_utf8(content.to_vec()).unwrap()),
+                _ => { panic!("Path is not a file {:?}", path.as_ref()); }
+            }).unwrap()
+    }
+
+    fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>> {
+        if ! self.exists(path.as_ref()) { panic!("Path not found {:?}", path.as_ref()); }
+
+        self.0.read().unwrap()
+            .get(&NormalizedPath::from(path.as_ref()))
+            .map(|node| match node {
+                Node::File(content) => Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read>),
                 _ => { panic!("Path is not a file {:?}", path.as_ref()); }
             }).unwrap()
     }

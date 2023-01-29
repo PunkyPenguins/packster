@@ -1,5 +1,5 @@
 mod directory_archiver;
-mod directory_digester;
+mod hash_digester;
 
 #[cfg(test)]
 pub mod mock;
@@ -7,4 +7,4 @@ pub mod mock;
 pub mod dto;
 
 pub use directory_archiver::DirectoryArchiver;
-pub use directory_digester::DirectoryDigester;
+pub use hash_digester::HashDigester;

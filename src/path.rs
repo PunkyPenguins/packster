@@ -1,6 +1,7 @@
 use std::{path::{PathBuf, Path, Component}, ops::Deref};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord
+)]
 pub struct NormalizedPath(PathBuf);
 
 impl From<&Path> for NormalizedPath {

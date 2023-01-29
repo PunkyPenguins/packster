@@ -44,8 +44,8 @@ fn pack<F: FileSystem, A: Archiver, D: Digester>(
     let portage_path = command.as_portage_manifest_path().parent().ok_or_else(|| Error::ManifesPathIsADirectory(command.as_portage_manifest_path().to_path_buf()))?;
     let portage_manifest = <dyn PortageManifest>::parse(raw_manifest_string)?; //TODO validate the dto values with rules like no undersbusiness in identifier
     let tmp_archive_path = archiver.create_archive(filesystem, portage_path, command.as_destination_directory_path())?;
-    let checksum = digester.generate_checksum(filesystem, &tmp_archive_path)?;
-    let final_archive_path = tmp_archive_path.with_file_name(format!("{}_{}_{}.packster", portage_manifest.as_identifier(), portage_manifest.as_version(), checksum));
+    let checksum = format!("{:x?}", digester.generate_checksum(filesystem, &tmp_archive_path)?);
+    let final_archive_path = tmp_archive_path.with_file_name(format!("{}_{}_{}_{}.packster", portage_manifest.as_identifier(), portage_manifest.as_version(), digester, checksum));
 
     filesystem.rename(tmp_archive_path, final_archive_path)?;
     Ok(())
@@ -62,7 +62,7 @@ mod test {
         },
         infrastructure::{
             mock::FileSystemMock,
-            DirectoryArchiver, DirectoryDigester
+            DirectoryArchiver, HashDigester
         }
     };
 
@@ -82,7 +82,7 @@ mod test {
         filesystem.write_all("portage/packster.toml", manifest.as_bytes())?;
 
         let archiver = DirectoryArchiver::default();
-        let digester = DirectoryDigester::default();
+        let digester = HashDigester::default();
         pack(&mut filesystem, &archiver, &digester, PackCommand::new("portage/packster.toml", "repo"))?;
 
         assert!(filesystem.exists("repo/static-package-a_0.0.1_.packster"));
