@@ -1,8 +1,5 @@
 use serde::Deserialize;
-use crate::essential::{
-    port::{ PackageManifestContract, PackageManifest },
-    port::DtoParser
-};
+use crate::business::port::PortageManifest;
 
 use super::DtoResult;
 
@@ -14,7 +11,7 @@ pub struct PortageManifestDto {
     version: String
 }
 
-impl PackageManifestContract for PortageManifestDto {
+impl PortageManifest for PortageManifestDto {
     fn as_identifier(&self) -> &str {
         &self.identifier
     }
@@ -24,11 +21,9 @@ impl PackageManifestContract for PortageManifestDto {
     }
 }
 
-impl DtoParser<PackageManifest> {
-    pub fn parse<S: AsRef<str>>(s: S) -> DtoResult<impl PackageManifestContract> {
+impl dyn PortageManifest {
+    pub fn parse<S: AsRef<str>>(s: S) -> DtoResult<impl PortageManifest> {
         let dto : PortageManifestDto = toml::from_str(s.as_ref())?;
         Ok(dto)
     }
 }
-
-

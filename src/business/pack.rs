@@ -2,7 +2,7 @@ use std::path::{PathBuf, Path};
 
 use crate::{
     Result, Error,
-    port::{ FileSystem, Archiver, Digester, DtoParser, PackageManifest, PackageManifestContract }
+    port::{ FileSystem, Archiver, Digester, PortageManifest }
 };
 
 
@@ -30,6 +30,15 @@ impl PackCommand {
     }
 }
 
+pub struct ValidPackageManifest<'a>(&'a dyn PortageManifest);
+
+impl <'a>ValidPackageManifest<'a> {
+    fn new(portage_manifest: &'a dyn PortageManifest) -> Result<Self> { //TODO implement try_from !
+        //validation ...
+        Ok(ValidPackageManifest(portage_manifest))
+    }
+}
+
 fn pack<F: FileSystem, A: Archiver, D: Digester>(
     filesystem: &mut F,
     archiver: &A,
@@ -41,7 +50,7 @@ fn pack<F: FileSystem, A: Archiver, D: Digester>(
     if filesystem.is_directory(command.as_portage_manifest_path()) { return Err(Error::ManifesPathIsADirectory(command.as_portage_manifest_path().to_path_buf())) }
 
     let portage_path = command.as_portage_manifest_path().parent().ok_or_else(|| Error::ManifesPathIsADirectory(command.as_portage_manifest_path().to_path_buf()))?;
-    let portage_manifest = DtoParser::<PackageManifest>::parse(raw_manifest_string)?; //TODO validate the dto values with rules like no underscore
+    let portage_manifest = <dyn PortageManifest>::parse(raw_manifest_string)?; //TODO validate the dto values with rules like no undersbusiness in identifier //TODO try impl dyn PackageManifest to remove DtoParser
 
     let tmp_archive_path = archiver.create_archive(filesystem, portage_path, command.as_destination_directory_path())?;
     let checksum = digester.generate_checksum(filesystem, &tmp_archive_path)?;
@@ -60,7 +69,7 @@ mod test {
         port::{
             ReadOnlyFileSystem
         },
-        mandatory::{
+        infrastructure::{
             mock::FileSystemMock,
             DirectoryArchiver, DirectoryDigester
         }
@@ -80,6 +89,7 @@ mod test {
         "#};
 
         filesystem.write_all("portage/packster.toml", manifest.as_bytes())?;
+
         let archiver = DirectoryArchiver::default();
         let digester = DirectoryDigester::default();
         pack(&mut filesystem, &archiver, &digester, PackCommand::new("portage/packster.toml", "repo"))?;

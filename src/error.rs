@@ -3,7 +3,7 @@ use std::{
     error,
     io, path::PathBuf
 };
-use crate::mandatory::dto::DtoError;
+use crate::infrastructure::dto::DtoError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -17,8 +17,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
         match self {
-            Io(e) => write!(f, "Io error : {}", e),
-            DtoError(e) => write!(f, "DTO error : {}", e),
+            Io(e) => write!(f, "Io error : {e}"),
+            DtoError(e) => write!(f, "DTO error : {e}"),
             ManifesPathIsADirectory(path) => write!(f, "Manifest path is not a directory : {}", path.to_string_lossy()),
             ManifestPathDoesNotExist(path) => write!(f, "Manifest path does not exist : {}", path.to_string_lossy()),
 
@@ -32,8 +32,8 @@ impl error::Error for Error {
         match self {
             Io(e) => Some(e),
             DtoError(e) => Some(e),
-            ManifesPathIsADirectory(e) => None,
-            ManifestPathDoesNotExist(e) => None,
+            ManifesPathIsADirectory(_) => None,
+            ManifestPathDoesNotExist(_) => None,
         }
     }
 }

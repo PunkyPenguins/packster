@@ -28,8 +28,3 @@ pub trait Archiver : Sync + Send {
 pub trait Digester : Sync + Send {
     fn generate_checksum<F: ReadOnlyFileSystem, P: AsRef<Path>>(&self, filesystem: &F, file_path: P) -> Result<String>;
 }
-
-/**
- * Constrainted by convention to implement a parse method as `fn parse<S: AsRef<str>>(s: S) -> Result<impl WhateverDataContractTShouldComply>`
- */
-pub struct DtoParser<T>(PhantomData<T>);

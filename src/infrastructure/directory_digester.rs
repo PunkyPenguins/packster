@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::{essential::port::{Digester, ReadOnlyFileSystem}, Result};
+use crate::{business::port::{Digester, ReadOnlyFileSystem}, Result};
 
 pub struct DirectoryDigester;
 
