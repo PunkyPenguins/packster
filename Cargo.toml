@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 indoc = "1.0"
 normpath = "1.0.1"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7.0"
+uniqueid = "0.2.6"
 # rust-lzma = "0.5.1"
 #tera = "1.17.1"
 #relative-path = "1.7.3"

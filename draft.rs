@@ -155,3 +155,29 @@ mod test {
         assert!(false)
     }
 }
+
+
+
+pub struct PortageManifestDtoBuilder {
+    identifier: Option<String>,
+    version: Option<String>
+}
+
+impl PortageManifestDtoBuilder {
+    fn with_identifier<S: AsRef<str>>(self, s: S) -> Self {
+        self.identifier = Some(s.as_ref().to_string());
+        self
+    }
+
+    fn with_version<S: AsRef<str>>(self, s: S) -> Self {
+        self.version = Some(s.as_ref().to_string());
+        self
+    }
+
+    fn build(self) -> DtoResult<PortageManifestDto> {
+        let identifier = self.identifier.ok_or_else(|| DtoError::MissingMandatoryField{ entity_name: "PortageManifest", field_name: "identifier" })?;
+        let version = self.version.ok_or_else(|| DtoError::MissingMandatoryField{ entity_name: "PortageManifest", field_name: "identifier" })?;
+
+        Ok(PortageManifestDto { identifier, version })
+    }
+}

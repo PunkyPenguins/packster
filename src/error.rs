@@ -1,12 +1,16 @@
 use std::{
     fmt,
     error,
-    io
+    io, path::PathBuf
 };
+use crate::mandatory::dto::DtoError;
 
 #[derive(Debug)]
 pub enum Error {
-    Io(io::Error)
+    Io(io::Error),
+    DtoError(DtoError),
+    ManifesPathIsADirectory(PathBuf),
+    ManifestPathDoesNotExist(PathBuf)
 }
 
 impl fmt::Display for Error {
@@ -14,6 +18,10 @@ impl fmt::Display for Error {
         use Error::*;
         match self {
             Io(e) => write!(f, "Io error : {}", e),
+            DtoError(e) => write!(f, "DTO error : {}", e),
+            ManifesPathIsADirectory(path) => write!(f, "Manifest path is not a directory : {}", path.to_string_lossy()),
+            ManifestPathDoesNotExist(path) => write!(f, "Manifest path does not exist : {}", path.to_string_lossy()),
+
         }
     }
 }
@@ -23,6 +31,9 @@ impl error::Error for Error {
         use Error::*;
         match self {
             Io(e) => Some(e),
+            DtoError(e) => Some(e),
+            ManifesPathIsADirectory(e) => None,
+            ManifestPathDoesNotExist(e) => None,
         }
     }
 }
@@ -30,3 +41,9 @@ impl error::Error for Error {
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self { Error::Io(error) }
 }
+
+
+impl From<DtoError> for Error {
+    fn from(error: DtoError) -> Self { Error::DtoError(error) }
+}
+
