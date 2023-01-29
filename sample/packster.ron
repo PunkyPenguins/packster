@@ -1,0 +1,36 @@
+PackageManifest(
+    identifier: "package-a"
+    version: "0.0.1"
+    description: ""
+    author: ""
+    license: "",
+    parameters: {
+        Parameter ( key: "param1", default: "value1", ask_user: true, overrideable: true, events: [ "install" ] ) //ask_user optional defaults to true, overridable defaults to false, type defaults to string, events optional defaults to any
+    },
+    handlers: [ //optional => defaults to empty
+        Handler ( executor: "pwsh", event: "pack",      script: "pack.ps1"      ) //event optional => defaults to any
+        Handler ( executor: "pwsh", event: "install",   script: "install.ps1"   ) //event optional => defaults to any
+        Handler ( executor: "pwsh", event: "upgrade",   script: "upgrade.ps1"   ) //event optional => defaults to any
+        Handler ( executor: "pwsh", event: "uninstall", script: "uninstall.ps1" ) //event optional => defaults to any
+        Handler ( executor: "pwsh", event: "any",       script: "any.ps1"       ) //event optional => defaults to any
+    ]
+    resources: [ //optional => defaults to empty
+        SystemResource ( resource_type: "Environment",       key: "PACKAGE_A_KEY"        )
+        SystemResource ( resource_type: "ExecutableInPath",  name: "package_a.exe"       )
+        SystemResource ( resource_type: "SharedDirectory",   key: "C:\shared\directory"  )
+        SystemResource ( resource_type: "NetPort",           number: 1972                )
+    ]
+    dependencies: [ //optional => defaults to empty
+        Dependency(
+            //executor should provide : locator function, parameters getter fonction
+            //values : identifier, version, description, author, licenses
+            identifier: "packster-pwsh-executor", version_constraint: { constraint_type: "latest" }
+        )
+        Dependency(
+            events: [ "install", "upgrade" ], //optional "any"
+            identifier: "package-b",
+            version_constraint:  ( constraint_type: "exact", version: "0.0.1" ),
+            needs:  [ SystemResource ( resource_type: "Environment", key: "PACKAGE_B_KEY" ) ] //optional
+        )
+    ]
+)
