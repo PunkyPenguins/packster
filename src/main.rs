@@ -5,6 +5,7 @@
 //#![warn(clippy::all)]
 
 mod error;
+pub mod path;
 mod infrastructure;
 mod business;
 

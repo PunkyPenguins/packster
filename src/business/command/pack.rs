@@ -1,4 +1,4 @@
-use std::path::{PathBuf, Path};
+use std::{path::{PathBuf, Path}, ops::Deref};
 
 use crate::{
     Result, Error,
@@ -30,14 +30,6 @@ impl PackCommand {
     }
 }
 
-pub struct ValidPackageManifest<'a>(&'a dyn PortageManifest);
-
-impl <'a>ValidPackageManifest<'a> {
-    fn new(portage_manifest: &'a dyn PortageManifest) -> Result<Self> { //TODO implement try_from !
-        //validation ...
-        Ok(ValidPackageManifest(portage_manifest))
-    }
-}
 
 fn pack<F: FileSystem, A: Archiver, D: Digester>(
     filesystem: &mut F,
@@ -50,8 +42,7 @@ fn pack<F: FileSystem, A: Archiver, D: Digester>(
     if filesystem.is_directory(command.as_portage_manifest_path()) { return Err(Error::ManifesPathIsADirectory(command.as_portage_manifest_path().to_path_buf())) }
 
     let portage_path = command.as_portage_manifest_path().parent().ok_or_else(|| Error::ManifesPathIsADirectory(command.as_portage_manifest_path().to_path_buf()))?;
-    let portage_manifest = <dyn PortageManifest>::parse(raw_manifest_string)?; //TODO validate the dto values with rules like no undersbusiness in identifier //TODO try impl dyn PackageManifest to remove DtoParser
-
+    let portage_manifest = <dyn PortageManifest>::parse(raw_manifest_string)?; //TODO validate the dto values with rules like no undersbusiness in identifier
     let tmp_archive_path = archiver.create_archive(filesystem, portage_path, command.as_destination_directory_path())?;
     let checksum = digester.generate_checksum(filesystem, &tmp_archive_path)?;
     let final_archive_path = tmp_archive_path.with_file_name(format!("{}_{}_{}.packster", portage_manifest.as_identifier(), portage_manifest.as_version(), checksum));
