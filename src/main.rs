@@ -7,12 +7,13 @@
 mod error;
 pub mod path;
 mod infrastructure;
-mod business;
+mod essential;
+mod application;
 
 type Result<T> = std::result::Result<T, error::Error>;
 
 use error::Error;
-use business::port;
+use essential::port;
 
 
 fn main() {

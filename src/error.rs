@@ -3,14 +3,14 @@ use std::{
     error,
     io, path::PathBuf
 };
-use crate::infrastructure::dto::DtoError;
+use crate::application::RepresentationError;
 
 #[derive(Debug)]
-pub enum Error {
-    Io(io::Error),
-    DtoError(DtoError),
-    ManifesPathIsADirectory(PathBuf),
-    ManifestPathDoesNotExist(PathBuf)
+pub enum Error { //TODO split errors into each tier
+    Io(io::Error), //would be infra
+    DtoError(RepresentationError), //would be app
+    ManifesPathIsADirectory(PathBuf), //would be biz
+    ManifestPathDoesNotExist(PathBuf) //would be biz
 }
 
 impl fmt::Display for Error {
@@ -43,7 +43,7 @@ impl From<io::Error> for Error {
 }
 
 
-impl From<DtoError> for Error {
-    fn from(error: DtoError) -> Self { Error::DtoError(error) }
+impl From<RepresentationError> for Error {
+    fn from(error: RepresentationError) -> Self { Error::DtoError(error) }
 }
 

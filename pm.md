@@ -120,3 +120,22 @@ location :
 
 https://github.com/yonaskolb/packster
 https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527
+
+
+
+the smart thing here would be identification of a package.
+a package ( all its versions ) wouldn't simply be identified by a name, but by (arbitrary ?) labels:
+- target plaform ( bitness )
+- target operating system
+- compiler
+- provider / vendor ?
+
+if a user want to install from a name, some of those labels would be infered from system, and there is still conflict, the user would be asked for what he want to install
+there is two main drawback to that approach :
+- dependencies has to take in account that in dependency constraint definition
+- all the labels has to be specified at package creation once and for all ( to ensure version contiguity )
+
+what not package medias in the same way ?
+
+// https://herbertograca.files.wordpress.com/2018/11/070-explicit-architecture-svg.png
+// https://youtu.be/qBLtZN3p3FU?t=1117

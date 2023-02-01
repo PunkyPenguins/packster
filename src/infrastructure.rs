@@ -1,10 +1,11 @@
-mod directory_archiver;
-mod hash_digester;
+mod compressor;
+mod file_digester;
+
+pub use compressor::Compressor;
+pub use file_digester::FileDigester;
 
 #[cfg(test)]
-pub mod mock;
+mod in_memory_filesystem;
 
-pub mod dto;
-
-pub use directory_archiver::DirectoryArchiver;
-pub use hash_digester::HashDigester;
+#[cfg(test)]
+pub use in_memory_filesystem::*;

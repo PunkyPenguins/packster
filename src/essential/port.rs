@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, io::{BufReader, Read}};
+use std::{path::{Path, PathBuf}, io::{Read, Write}, fmt::Display};
 use crate::Result;
 
 pub trait TmpDir {
@@ -20,17 +20,22 @@ pub trait FileSystem : ReadOnlyFileSystem {
     fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&mut self, path: P, buf: B) -> Result<()>;
     fn rename<P: AsRef<Path>>(&mut self, source: P, destination: P) -> Result<()>;
     fn create_tmp_dir<S: AsRef<str>>(&mut self, prefix: S) -> Result<Box<dyn TmpDir>>;
+    fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&mut self, path: P, buf: B) -> Result<usize>;
+    fn open_write<'a, P: AsRef<Path>>(&'a mut self, path: P) -> Result<Box<dyn Write + 'a>>;
 }
 
 pub trait Archiver : Sync + Send {
-    fn create_archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &mut F, portage_path: P, destination_path: P) -> Result<PathBuf>;
+    fn archive<P: AsRef<Path>, W: Write>(&self, path: P, write: W) -> Result<()>;
+    fn compress<R: Read, W: Write>(&self, reader: R, write: W) -> Result<()>;
+    //TODO expand archive => We want opposite features to be bound in the same trait
 }
 
-pub trait Digester : Sync + Send + ToString {
-    fn generate_checksum<F: ReadOnlyFileSystem, P: AsRef<Path>>(&self, filesystem: &F, file_path: P) -> Result<Vec<u8>>;
+pub trait Digester : Sync + Send + Display {
+    fn generate_checksum<R: Read>(&self, reader: R) -> Result<Vec<u8>>;
+    //TODO verify checksup => We want opposite features to be bound in the same trait
 }
 
-pub trait PortageManifest {
+pub trait PortageManifest : Sync + Send {
     fn as_identifier(&self) -> &str;
     fn as_version(&self) -> &str;
 }
