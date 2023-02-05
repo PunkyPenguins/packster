@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, io::{Read, Write}, fs::{self, File}};
+use std::{path::Path, io::{Read, Write}, fs::{self, File}};
 
 use walkdir::WalkDir;
 
@@ -51,26 +51,30 @@ impl IReadOnlyFileSystem for StdFileSystem {
 
 impl IFileSystem for StdFileSystem {
     fn create<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        todo!()
+        File::create(path)?;
+        Ok(())
     }
 
     fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        todo!()
+        fs::create_dir(path)?;
+        Ok(())
     }
 
     fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<()> {
-        todo!()
+        fs::write(path, buf)?;
+        Ok(())
     }
 
     fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()> {
-        todo!()
+        fs::rename(source, destination)?;
+        Ok(())
     }
 
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize> {
-        todo!()
+        Ok(File::open(path)?.write(buf.as_ref())? as usize)
     }
 
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>> {
-        todo!()
+        Ok(Box::new(File::open(path.as_ref())?))
     }
 }
