@@ -1,14 +1,15 @@
-use std::{path::{Path, PathBuf}, io::{Read, Write}, fmt::Display};
-use crate::Result;
+use std::{path::Path, io::{Read, Write}, fmt::Display};
+use crate::{Result, path::NormalizedPath};
 
 pub struct DirEntry {
-    path: PathBuf,
+    path: NormalizedPath,
     size: u64
 }
 
 impl DirEntry {
-    pub fn new(path: PathBuf, size: u64) -> Self { DirEntry { path, size } }
+    pub fn new(path: &Path, size: u64) -> Self { DirEntry { path: NormalizedPath::from(path), size } }
     pub fn as_path(&self) -> &Path { &self.path }
+    pub fn as_normalized_path(&self) -> &NormalizedPath { &self.path }
     pub fn size(&self) -> u64 { self.size }
 }
 

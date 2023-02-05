@@ -14,6 +14,8 @@ impl IArchiver for TarballArchiver {
         let mut tar_builder = Builder::new(encoder);
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
             let found_entry = found_entry_result?;
+            let found_relative_path = found_entry.as_normalized_path().to_relative_path(project_path.as_ref());
+
             let mut header = Header::new_gnu();
 
             if filesystem.is_file(found_entry.as_path()) {
@@ -22,11 +24,11 @@ impl IArchiver for TarballArchiver {
                 header.set_size(size as u64);
                 header.set_cksum();
 
-                let reader = filesystem.open_read(found_entry.as_path())?;
-                tar_builder.append_data(&mut header, found_entry.as_path(), reader)?; //TODO rework path to be always relative to project path
+                let reader = filesystem.open_read(&found_relative_path)?;
+                tar_builder.append_data(&mut header, &found_relative_path, reader)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
                 header.set_entry_type(EntryType::Directory);
-                tar_builder.append_data(&mut header, found_entry.as_path(), empty())?;
+                tar_builder.append_data(&mut header, found_relative_path, empty())?;
             }
         }
 

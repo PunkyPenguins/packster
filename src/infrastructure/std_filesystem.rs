@@ -35,7 +35,7 @@ impl IReadOnlyFileSystem for StdFileSystem {
                     entry.and_then(|entry|
                         entry.metadata().map(|metadata|
                             DirEntry::new(
-                                entry.into_path().to_path_buf(),
+                                entry.path(),
                                 metadata.len()
                             )
                         )

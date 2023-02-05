@@ -75,7 +75,7 @@ impl IReadOnlyFileSystem for InMemoryFileSystem {
             ).map(|(node_path, _)|
                 self.file_size(node_path)
                     .map(|size|
-                        DirEntry::new(node_path.to_relative_path(target_path).to_path_buf(), size)
+                        DirEntry::new(node_path, size)
                     )
             ).collect();
 
@@ -185,13 +185,14 @@ impl IArchiver for InMemoryFileSystem {
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
             let found_entry = found_entry_result?;
-            let full_path = project_path.as_ref().join(found_entry.as_path());
-            if filesystem.is_file(&full_path) {
-                let mut reader = filesystem.open_read(&full_path)?;
-                let mut writer = self.open_write(found_entry.as_path())?;
+            let relative_path = found_entry.as_normalized_path().to_relative_path(project_path.as_ref());
+
+            if filesystem.is_file(found_entry.as_path()) {
+                let mut reader = filesystem.open_read(found_entry.as_path())?;
+                let mut writer = self.open_write(relative_path)?;
                 io::copy(&mut reader, &mut writer)?;
-            } else if filesystem.is_directory(&full_path) {
-                self.create_dir(found_entry.as_path())?;
+            } else if filesystem.is_directory(found_entry.as_path()) {
+                self.create_dir(relative_path)?;
             }
         }
 
