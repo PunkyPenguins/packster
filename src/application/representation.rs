@@ -1,8 +1,8 @@
 mod error;
-mod portage_manifest;
+mod project_manifest;
 
 type RepresentationResult<T> = std::result::Result<T, error::RepresentationError>;
 
 pub use error::RepresentationError;
-pub use portage_manifest::*;
+pub use project_manifest::*;
 

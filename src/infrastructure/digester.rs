@@ -1,19 +1,19 @@
-use std::{path::Path, io::{self, Read}, fmt};
+use std::{io::{self, Read}, fmt};
 
-use crate::{Result, essential::port::Digester};
+use crate::{Result, essential::port::IDigester};
 use sha2::{ Sha256, Digest };
 
-pub enum FileDigester {
+pub enum Digester {
     Sha256
 }
 
-impl Default for FileDigester {
+impl Default for Digester {
     fn default() -> Self {
-        FileDigester::Sha256
+        Digester::Sha256
     }
 }
 
-impl Digester for FileDigester {
+impl IDigester for Digester {
     fn generate_checksum<R: Read>(&self, mut reader: R) -> Result<Vec<u8>> {
         match self {
             Self::Sha256 => {
@@ -25,7 +25,7 @@ impl Digester for FileDigester {
     }
 }
 
-impl fmt::Display for FileDigester {
+impl fmt::Display for Digester {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Sha256 => write!(f, "sha256")

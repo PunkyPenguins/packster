@@ -1,12 +1,36 @@
 use std::{path::{PathBuf, Path, Component}, ops::Deref};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord
-)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct NormalizedPath(PathBuf);
+
+
+impl NormalizedPath {
+    pub fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool {
+        child_path.as_ref()
+            .ancestors()
+            .map(|ancestor| NormalizedPath(ancestor.to_path_buf()))
+            .any(|ancestor| { ancestor == *self })
+    }
+
+    pub fn to_relative_path<P: AsRef<Path>>(&self, base: P) -> Self {
+        NormalizedPath(
+            self.0.strip_prefix(base.as_ref())
+                .unwrap_or_else(|_| &self.0)
+                .to_path_buf()
+        )
+    }
+}
 
 impl From<&Path> for NormalizedPath {
     fn from(path: &Path) -> Self {
         NormalizedPath(normalize_path(path))
+    }
+}
+
+
+impl AsRef<Path> for NormalizedPath {
+    fn as_ref(&self) -> &Path {
+        &self.0
     }
 }
 

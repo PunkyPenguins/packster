@@ -1,41 +1,47 @@
 use std::{path::{Path, PathBuf}, io::{Read, Write}, fmt::Display};
 use crate::Result;
 
-pub trait TmpDir {
-    fn path(&self) -> &Path;
-    fn close(self) -> Result<()>;
+pub struct DirEntry {
+    path: PathBuf,
+    size: u64
 }
 
-pub trait ReadOnlyFileSystem : Sync + Send {
+impl DirEntry {
+    pub fn new(path: PathBuf, size: u64) -> Self { DirEntry { path, size } }
+    pub fn as_path(&self) -> &Path { &self.path }
+    pub fn size(&self) -> u64 { self.size }
+}
+
+pub trait IReadOnlyFileSystem : Sync + Send {
     fn exists<P: AsRef<Path>>(&self, path: P) -> bool;
     fn is_file<P: AsRef<Path>>(&self, path: P) -> bool;
     fn is_directory<P: AsRef<Path>>(&self, path: P) -> bool;
     fn read_to_string<P: AsRef<Path>>(&self, path: P) -> Result<String>;
     fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>>;
+    fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a>;
+    fn file_size<P: AsRef<Path>>(&self, path: P) -> Result<u64>;
 }
 
-pub trait FileSystem : ReadOnlyFileSystem {
-    fn create<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;
-    fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;
-    fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&mut self, path: P, buf: B) -> Result<()>;
-    fn rename<P: AsRef<Path>>(&mut self, source: P, destination: P) -> Result<()>;
-    fn create_tmp_dir<S: AsRef<str>>(&mut self, prefix: S) -> Result<Box<dyn TmpDir>>;
-    fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&mut self, path: P, buf: B) -> Result<usize>;
-    fn open_write<'a, P: AsRef<Path>>(&'a mut self, path: P) -> Result<Box<dyn Write + 'a>>;
+pub trait IFileSystem : IReadOnlyFileSystem {
+    fn create<P: AsRef<Path>>(&self, path: P) -> Result<()>;
+    fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()>;
+    fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<()>;
+    fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()>;
+    fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize>;
+    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>>;
 }
 
-pub trait Archiver : Sync + Send {
-    fn archive<P: AsRef<Path>, W: Write>(&self, path: P, write: W) -> Result<()>;
-    fn compress<R: Read, W: Write>(&self, reader: R, write: W) -> Result<()>;
-    //TODO expand archive => We want opposite features to be bound in the same trait
+pub trait IArchiver : Sync + Send + Display {
+    fn archive<F: IFileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()>;
+    // fn unarchive<F: IFileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> Result<()>;
 }
 
-pub trait Digester : Sync + Send + Display {
+pub trait IDigester : Sync + Send + Display {
     fn generate_checksum<R: Read>(&self, reader: R) -> Result<Vec<u8>>;
-    //TODO verify checksup => We want opposite features to be bound in the same trait
+    // fn verify_checksum<R: Read>(&self, reader: R, checksum: &[u8]) -> bool;
 }
 
-pub trait PortageManifest : Sync + Send {
+pub trait IProjectManifest : Sync + Send {
     fn as_identifier(&self) -> &str;
     fn as_version(&self) -> &str;
 }
