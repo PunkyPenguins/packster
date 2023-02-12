@@ -7,7 +7,7 @@ Portage(
     parameters: {
         Parameter ( key: "param1", default: "value1", ask_user: true, overrideable: true, events: [ "install" ] ) //ask_user optional defaults to true, overridable defaults to false, type defaults to string, events optional defaults to any
     },
-    handlers: [ //optional => defaults to empty
+    handlers: [ //optional => defaults to predefined script names and choose executor by extension ?
         Handler ( executor: "pwsh", event: "pack",      script: "pack.ps1"      ) //event optional => defaults to any
         Handler ( executor: "pwsh", event: "install",   script: "install.ps1"   ) //event optional => defaults to any
         Handler ( executor: "pwsh", event: "upgrade",   script: "upgrade.ps1"   ) //event optional => defaults to any

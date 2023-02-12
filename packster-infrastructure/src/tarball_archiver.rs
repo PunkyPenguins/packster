@@ -1,8 +1,8 @@
 use std::{io::empty, path::Path, fmt};
-
-use crate::{Result, port::IArchiver, essential::port::IFileSystem};
 use flate2::{write::GzEncoder, Compression};
-use tar::{ Header, Builder, EntryType };
+use tar::{Header, Builder, EntryType};
+use packster_core::port::{IFileSystem, IArchiver};
+use crate::{Result, Error};
 
 #[derive(Default)]
 pub struct TarballArchiver;
@@ -25,10 +25,10 @@ impl IArchiver for TarballArchiver {
                 header.set_cksum();
 
                 let reader = filesystem.open_read(&found_relative_path)?;
-                tar_builder.append_data(&mut header, &found_relative_path, reader)?;
+                tar_builder.append_data(&mut header, &found_relative_path, reader).map_err(Error::from)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
                 header.set_entry_type(EntryType::Directory);
-                tar_builder.append_data(&mut header, found_relative_path, empty())?;
+                tar_builder.append_data(&mut header, found_relative_path, empty()).map_err(Error::from)?;
             }
         }
 

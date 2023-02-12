@@ -1,7 +1,7 @@
 use std::{io::{self, Read}, fmt};
-
-use crate::{Result, essential::port::IDigester};
-use sha2::{ Sha256, Digest };
+use sha2::{Sha256, Digest};
+use packster_core::{IDigester};
+use crate::{ Result, Error };
 
 pub enum Digester {
     Sha256
@@ -18,7 +18,7 @@ impl IDigester for Digester {
         match self {
             Self::Sha256 => {
                 let mut hasher = Sha256::new();
-                io::copy(&mut reader, &mut hasher)?;
+                io::copy(&mut reader, &mut hasher).map_err(Error::from)?;
                 Ok(hasher.finalize().to_vec())
             }
         }

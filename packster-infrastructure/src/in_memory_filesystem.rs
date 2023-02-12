@@ -3,9 +3,14 @@ use std::{
     collections::BTreeMap,
     sync::RwLock,
     path::{Path, PathBuf},
-    io::{ self, Cursor, Read, Write }
+    io::{self, Cursor, Read, Write}
 };
-use crate::{ Result, path::NormalizedPath, port::{IFileSystem, IReadOnlyFileSystem}, essential::port::{IArchiver, DirEntry} };
+
+use packster_core::{
+    IFileSystem, IReadOnlyFileSystem, DirEntry, IArchiver,
+    path::NormalizedPath
+};
+use crate::{Result, Error};
 
 
 #[derive(Clone, Debug)]
@@ -84,7 +89,7 @@ impl IReadOnlyFileSystem for InMemoryFileSystem {
 
     fn file_size<P: AsRef<Path>>(&self, path: P) -> Result<u64> {
         let mut buffer = Vec::new();
-        self.open_read(path)?.read_to_end(&mut buffer)?;
+        self.open_read(path)?.read_to_end(&mut buffer).map_err(Error::from)?;
         Ok(buffer.len() as u64)
     }
 }
@@ -190,7 +195,7 @@ impl IArchiver for InMemoryFileSystem {
             if filesystem.is_file(found_entry.as_path()) {
                 let mut reader = filesystem.open_read(found_entry.as_path())?;
                 let mut writer = self.open_write(relative_path)?;
-                io::copy(&mut reader, &mut writer)?;
+                io::copy(&mut reader, &mut writer).map_err(Error::from)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
                 self.create_dir(relative_path)?;
             }
