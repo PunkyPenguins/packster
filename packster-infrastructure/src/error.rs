@@ -3,13 +3,12 @@ use std::{
     error,
     io,
 };
-use packster_core;
-
 
 #[derive(Debug)]
 pub enum Error {
     Io(io::Error),
-    WalkDir(walkdir::Error)
+    WalkDir(walkdir::Error),
+    TomlDeserialize(toml::de::Error),
 }
 
 impl fmt::Display for Error {
@@ -17,7 +16,8 @@ impl fmt::Display for Error {
         use Error::*;
         match self {
             Io(e) => write!(f, "Io error : {e}"),
-            WalkDir(e) => write!(f, "WalkDir error : {e}")
+            WalkDir(e) => write!(f, "WalkDir error : {e}"),
+            TomlDeserialize(e) => write!(f, "Toml deserialize error : {e}")
         }
     }
 }
@@ -27,7 +27,8 @@ impl error::Error for Error {
         use Error::*;
         match self {
             Io(e) => Some(e),
-            WalkDir(e) => Some(e)
+            WalkDir(e) => Some(e),
+            TomlDeserialize(e) => Some(e)
         }
     }
 }
@@ -38,6 +39,10 @@ impl From<io::Error> for Error {
 
 impl From<walkdir::Error> for Error {
     fn from(error: walkdir::Error) -> Self { Error::WalkDir(error) }
+}
+
+impl From<toml::de::Error> for Error {
+    fn from(error: toml::de::Error) -> Self { Error::TomlDeserialize(error) }
 }
 
 impl From<Error> for packster_core::error::Error {

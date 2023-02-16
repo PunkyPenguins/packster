@@ -1,14 +1,14 @@
 use std::{io::empty, path::Path, fmt};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
-use packster_core::port::{IFileSystem, IArchiver};
+use packster_core::port::{FileSystem, Archiver};
 use crate::{Result, Error};
 
 #[derive(Default)]
 pub struct TarballArchiver;
 
-impl IArchiver for TarballArchiver {
-    fn archive<F: IFileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
+impl Archiver for TarballArchiver {
+    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
         let writer = filesystem.open_write(archive_path)?;
         let encoder = GzEncoder::new(writer, Compression::default());
         let mut tar_builder = Builder::new(encoder);
@@ -21,7 +21,7 @@ impl IArchiver for TarballArchiver {
             if filesystem.is_file(found_entry.as_path()) {
                 let size = found_entry.size();
                 header.set_entry_type(EntryType::Regular);
-                header.set_size(size as u64);
+                header.set_size(size);
                 header.set_cksum();
 
                 let reader = filesystem.open_read(&found_relative_path)?;

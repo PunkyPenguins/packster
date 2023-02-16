@@ -11,6 +11,9 @@ sha2 = "0.10.6"
 tar = "0.4.38"
 flate2 = "1.0.25"
 walkdir = "2.3.2"
+uniqueid = "0.2.6"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7.0"
 
 [features]
 test = []

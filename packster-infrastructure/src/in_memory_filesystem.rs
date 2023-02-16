@@ -7,7 +7,7 @@ use std::{
 };
 
 use packster_core::{
-    IFileSystem, IReadOnlyFileSystem, DirEntry, IArchiver,
+    FileSystem, ReadOnlyFileSystem, DirEntry, Archiver,
     path::NormalizedPath
 };
 use crate::{Result, Error};
@@ -22,13 +22,13 @@ pub enum Node {
 #[derive(Default, Debug)]
 pub struct InMemoryFileSystem(RwLock<BTreeMap<NormalizedPath, Node>>);
 
-impl IReadOnlyFileSystem for InMemoryFileSystem {
+impl ReadOnlyFileSystem for InMemoryFileSystem {
     fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPath::from(path.as_ref())).is_some()
+            self.0.read().unwrap().get(&NormalizedPath::from(path)).is_some()
         }
     }
 
@@ -41,7 +41,7 @@ impl IReadOnlyFileSystem for InMemoryFileSystem {
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPath::from(path.as_ref())).filter(|node| matches!(node, Node::Directory)).is_some()
+            self.0.read().unwrap().get(&NormalizedPath::from(path)).filter(|node| matches!(node, Node::Directory)).is_some()
         }
     }
 
@@ -94,11 +94,11 @@ impl IReadOnlyFileSystem for InMemoryFileSystem {
     }
 }
 
-impl IFileSystem for InMemoryFileSystem {
+impl FileSystem for InMemoryFileSystem {
     fn create<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if self.exists(path.as_ref()) { panic!("create: Path already exists ! {:?}", path.as_ref()); }
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("create: Parent is not a directory ! {:?}", parent_path); }
+            if ! self.is_directory(parent_path) { panic!("create: Parent is not a directory ! {parent_path:?}"); }
         }
 
         self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::File(Vec::new()));
@@ -108,7 +108,7 @@ impl IFileSystem for InMemoryFileSystem {
     fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if self.exists(path.as_ref()) { panic!("create_dir: Path already exists ! {:?}", path.as_ref()); }
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("create_dir: Parent is not a directory ! {:?}", parent_path); }
+            if ! self.is_directory(parent_path) { panic!("create_dir: Parent is not a directory ! {parent_path:?}"); }
         }
 
         self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::Directory);
@@ -117,7 +117,7 @@ impl IFileSystem for InMemoryFileSystem {
 
     fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<()> {
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("write_all: Parent is not a directory ! {:?}", parent_path); }
+            if ! self.is_directory(parent_path) { panic!("write_all: Parent is not a directory ! {parent_path:?}"); }
         }
 
         self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::File(buf.as_ref().to_vec()));
@@ -136,7 +136,7 @@ impl IFileSystem for InMemoryFileSystem {
 
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize> {
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("append: Parent is not a directory ! {:?}", parent_path); }
+            if ! self.is_directory(parent_path) { panic!("append: Parent is not a directory ! {parent_path:?}"); }
         }
 
         let len = buf.as_ref().len();
@@ -160,7 +160,7 @@ impl IFileSystem for InMemoryFileSystem {
 
         Ok(
             Box::new(
-                FileMock {
+                InMemoryFile {
                     fs: self,
                     path: path.as_ref().to_path_buf()
                 }
@@ -169,12 +169,12 @@ impl IFileSystem for InMemoryFileSystem {
     }
 }
 
-pub struct FileMock<'a>{
+pub struct InMemoryFile<'a>{
     fs: &'a InMemoryFileSystem,
     path: PathBuf
 }
 
-impl <'a>Write for FileMock<'a> {
+impl <'a>Write for InMemoryFile<'a> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         io::Result::Ok(self.fs.append(&self.path, buf).unwrap())
     }
@@ -184,8 +184,8 @@ impl <'a>Write for FileMock<'a> {
     }
 }
 
-impl IArchiver for InMemoryFileSystem {
-    fn archive<F: IFileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
+impl Archiver for InMemoryFileSystem {
+    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
         filesystem.create(archive_path.as_ref())?;
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {

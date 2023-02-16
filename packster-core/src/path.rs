@@ -15,7 +15,7 @@ impl NormalizedPath {
     pub fn to_relative_path<P: AsRef<Path>>(&self, base: P) -> Self {
         NormalizedPath(
             self.0.strip_prefix(base.as_ref())
-                .unwrap_or_else(|_| &self.0)
+                .unwrap_or(&self.0)
                 .to_path_buf()
         )
     }

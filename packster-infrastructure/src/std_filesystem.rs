@@ -5,12 +5,12 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use packster_core::{IReadOnlyFileSystem, IFileSystem, DirEntry};
+use packster_core::{ReadOnlyFileSystem, FileSystem, DirEntry};
 use crate::{Result, Error};
 
 pub struct StdFileSystem;
 
-impl IReadOnlyFileSystem for StdFileSystem {
+impl ReadOnlyFileSystem for StdFileSystem {
     fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
         path.as_ref().exists()
     }
@@ -53,7 +53,7 @@ impl IReadOnlyFileSystem for StdFileSystem {
     }
 }
 
-impl IFileSystem for StdFileSystem {
+impl FileSystem for StdFileSystem {
     fn create<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         File::create(path).map_err(Error::from)?;
         Ok(())
@@ -75,7 +75,7 @@ impl IFileSystem for StdFileSystem {
     }
 
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize> {
-        Ok(File::open(path).map_err(Error::from)?.write(buf.as_ref()).map_err(Error::from)? as usize)
+        Ok(File::open(path).map_err(Error::from)?.write(buf.as_ref()).map_err(Error::from)?)
     }
 
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>> {
