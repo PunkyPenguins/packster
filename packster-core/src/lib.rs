@@ -13,11 +13,10 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 mod path;
 pub use path::NormalizedPath;
 
-mod entity;
-pub use entity::{Identifier, Project};
+mod domain;
+pub use domain::{Identifier, Project};
 
 mod port;
 pub use port::*;
 
-mod pack;
-pub use pack::{ PackCommand, pack };
+pub mod operation;

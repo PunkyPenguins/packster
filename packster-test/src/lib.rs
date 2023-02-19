@@ -5,21 +5,18 @@ mod test {
     use std::{io::Read, fmt};
     use indoc::indoc;
 
-    //TODO problem here : either we move in_memory_filesystem in core, either we put such test outside core, either we put all this into another crate
     use packster_core::{
         Digester,
         ReadOnlyFileSystem,
         FileSystem,
         IdentifierGenerator,
-        pack,
         Result,
-        PackCommand
+        operation::{PackRequest, Operation, New}
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
         TomlParser
     };
-    // //TODO : assume that test to be integration and move it to a dedicated test package
 
     #[test]
     fn test_static_packing() -> Result<()> {
@@ -40,7 +37,7 @@ mod test {
         pub struct IdentifierGeneratorMock;
 
         impl IdentifierGenerator for IdentifierGeneratorMock {
-            fn generate_identifier<S: AsRef<str>>(&self, name: S) -> String {
+            fn generate_identifier<S: AsRef<str>>(&self, _name: S) -> String {
                 String::from("123456")
             }
         }
@@ -60,14 +57,12 @@ mod test {
         filesystem.write_all("project/packster.toml", manifest.as_bytes())?;
 
         let filesystem_as_archiver = InMemoryFileSystem::default();
-        pack(
-            &filesystem,
-            &filesystem_as_archiver,
-            &DigesterMock,
-            &IdentifierGeneratorMock,
-            &TomlParser,
-            &PackCommand::new("project/packster.toml", "repo")
-        )?;
+        Operation::new(PackRequest::new("project", "repo"),New)
+            .parse_project(&filesystem, &TomlParser)?
+            .generate_unique_identity(&IdentifierGeneratorMock)
+            .archive(&filesystem, &filesystem_as_archiver)?
+            .digest(&filesystem, &DigesterMock)?
+            .finalized(&filesystem)?;
 
         assert!(filesystem.exists("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));
         assert!(filesystem.is_file("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));

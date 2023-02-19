@@ -3,5 +3,6 @@
 members = [
     "packster-core",
     "packster-infrastructure",
-    "packster-test"
+    "packster-test",
+    "packster-cli"
 ]

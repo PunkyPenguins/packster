@@ -3,6 +3,7 @@ use serde::de::DeserializeOwned;
 
 use crate::{Result, path::NormalizedPath};
 
+#[derive(Debug)]
 pub struct DirEntry {
     path: NormalizedPath,
     size: u64

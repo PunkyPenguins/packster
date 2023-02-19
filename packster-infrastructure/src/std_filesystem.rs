@@ -28,7 +28,7 @@ impl ReadOnlyFileSystem for StdFileSystem {
     }
 
     fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>> {
-        Ok(Box::new(File::open(path.as_ref()).map_err(Error::from)?))
+        Ok(Box::new(File::open(path).map_err(Error::from)?))
     }
 
     fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
@@ -79,6 +79,6 @@ impl FileSystem for StdFileSystem {
     }
 
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>> {
-        Ok(Box::new(File::open(path.as_ref()).map_err(Error::from)?))
+        Ok(Box::new(File::create(path).map_err(Error::from)?))
     }
 }

@@ -24,3 +24,8 @@ https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html
 https://bit.dev
 https://blog.bitsrc.io/a-better-way-to-share-code-between-your-node-js-projects-af6fbadc3102
 https://webpack.js.org/concepts/module-federation/
+
+
+## About typestate
+
+https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-the-typestate-pattern-itself/
