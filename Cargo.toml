@@ -2,5 +2,6 @@
 
 members = [
     "packster-core",
-    "packster-infrastructure"
+    "packster-infrastructure",
+    "packster-test"
 ]

@@ -5,7 +5,7 @@
 
 mod error;
 pub use error::Error;
-pub type Result<T> = std::result::Result<T, packster_core::error::Error>;
+pub type Result<T> = std::result::Result<T, packster_core::Error>;
 
 mod tarball_archiver;
 pub use tarball_archiver::TarballArchiver;
@@ -20,6 +20,7 @@ mod uniqid_identifier_generator;
 pub use uniqid_identifier_generator::UniqidIdentifierGenerator;
 
 mod toml_parser;
+pub use toml_parser::TomlParser;
 
 
 #[cfg(feature = "test")]

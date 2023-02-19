@@ -1,0 +1,10 @@
+[package]
+name = "packster-test"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+packster-core = { path = "../packster-core" }
+packster-infrastructure = { path = "../packster-infrastructure", features=["test"] }
+indoc = "2.0.0"
+hex = "0.4.3"

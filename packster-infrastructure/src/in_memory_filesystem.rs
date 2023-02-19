@@ -7,8 +7,11 @@ use std::{
 };
 
 use packster_core::{
-    FileSystem, ReadOnlyFileSystem, DirEntry, Archiver,
-    path::NormalizedPath
+    FileSystem,
+    ReadOnlyFileSystem,
+    DirEntry,
+    Archiver,
+    NormalizedPath
 };
 use crate::{Result, Error};
 

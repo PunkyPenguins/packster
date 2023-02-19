@@ -275,7 +275,6 @@ name = "packster-core"
 version = "0.1.0"
 dependencies = [
  "hex",
- "indoc",
  "semver",
  "serde",
 ]
@@ -292,6 +291,16 @@ dependencies = [
  "toml",
  "uniqueid",
  "walkdir",
+]
+
+[[package]]
+name = "packster-test"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "indoc",
+ "packster-core",
+ "packster-infrastructure",
 ]
 
 [[package]]

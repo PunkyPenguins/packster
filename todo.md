@@ -8,11 +8,12 @@ type PositiveNumber = uint
 type String64 = str
 
 type AbsolutePath
-type Directory = AbsolutePath
 type File = AbsolutePath
+type Directory = AbsolutePath
+type ExistingDirectory = Directory
 
 type ValidCharacter = Numeric | LowercaseLetter | Dash
-type ProjectName = ValidString<ValidCharacter, String64>
+type ProjectName = 64CharacterLong<StringWith<ValidCharacter>>
 
 type VersionRequirement = ... ( delegate to rust-semver library )
 type Version = {
@@ -21,52 +22,63 @@ type Version = {
     patch: PositiveNumber
 }
 
-type ProjectWorkspace = Directory
-type ProjectManifest = {
+type ProjectWorkspace = ExistingDirectory
+type ProjectIdentifier  = {
     name: ProjectName,
     version: Version
 }
 
 type Project = {
-    project_manifest: ProjectManifest,
+    identifier: ProjectIdentifier,
     workspace: ProjectWorkspace
 }
 
-type Digester = Sha256 | Sha512
-type Checksum = { digester: Digester, value: bytes }
+type Digest = Sha256 | Sha512
+type Checksum = { digester: Digest, value: bytes }
+type Archive = File
 type VerifiedArchive = File
+type PackageIdentifier = Checksum
 type Package = {
-    project_manifest: ProjectManifest,
-    checksum: Checksum,
-    archive: VerifiedArchive
+    identifier: PackageIdentifier,
+    project_identifier: ProjectIdentifier,
+    archive: VerifiedArchive,
 }
 
-type DeploymentIdentifier = {
-    name: ProjectName,
-    version: Version,
-    constraint: VersionRequirement
-}
-
-type InstallLocation = Directory
+type DeploymentIdentifier = PackageIdentifier
 type Deployment = {
-    install_location: InstallLocation,
-    directory: Directory,
     identifier: DeploymentIdentifier,
-    project_manifest: ProjectManifest
+    project_identifier: ProjectIdentifier,
+    directory: ExistingDirectory,
+    constraint: MatchingVersionRequirement
 }
 
-type InstalledDeployment = Deployment
-type UninstalledDeployment = UninstalledDeployment
+type ContainerDirectory = ExistingDirectory
+type Container = {
+    directory: ContainerDirectory,
+    deployment_list: Vec<Deployment>
+}
 
 type Bundle = Vec<VersionRequirement>
 
-fn verify_archive_integrity = (File * Checksum) -> VerifiedArchive
-fn install_package = (Package * InstallLocation) -> &[InstalledDeployment]
+fn verify_directory_exists = (Directory * FileSystem) -> ExistingDirectory
+fn match_version_requirement = (VersionRequirement * Version) -> MatchingVersionRequirement
+fn verify_archive_integrity = (Archive * Checksum) -> VerifiedArchive
 fn pack_project = Project -> Package
-fn list_installed = InstallLocation -> &[InstalledDeployment]
-fn uninstall_deployment = (DeploymentIdentifier * InstallLocation) -> UninstalledDeployment
+fn deploy_package = (Package * ContainerDirectory) -> Container
+fn list_deployed = ContainerDirectory -> Container
+fn undeploy = (DeploymentIdentifier * ContainerDirectory) -> Container
 
-fn install_bundle = (Bundle * InstallLocation) -> &[InstalledDeployment]
+fn install_bundle = (Bundle * Container) -> Container
+
+
+/usr/bin/location/7cedFe/deployment_manifest.json
+/usr/bin/location/7cedFe/deployment_manifest.json
+/usr/bin/location/7cedFe/deployment_manifest.json
+/usr/bin/location/7cedFe/deployment_manifest.json
+/usr/bin/location/7cedFe/deployment_manifest.json
+/usr/bin/location/location_manifest.json (lock file)
+
+Project -> Package -> Deployment
 
 ## Later
 
@@ -74,7 +86,7 @@ Dependency
 Parameter / Feature ?
 DefaultInstallLocation
 Resource
-    Environment
+    Container
     ExecutableInPath
     SharedDirectory
 ResourceRequirement

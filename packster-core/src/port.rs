@@ -48,11 +48,6 @@ pub trait IdentifierGenerator : Sync + Send {
     fn generate_identifier<S: AsRef<str>>(&self, name: S) -> String;
 }
 
-pub trait PackCommand {
-    fn as_project_manifest_path(&self) -> &Path;
-    fn as_destination_directory_path(&self) -> &Path;
-}
-
 pub trait Parser {
     fn parse<S: AsRef<str>, T: DeserializeOwned>(&self, s: S) -> Result<T>;
 }

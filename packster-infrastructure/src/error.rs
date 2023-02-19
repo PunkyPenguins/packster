@@ -45,8 +45,8 @@ impl From<toml::de::Error> for Error {
     fn from(error: toml::de::Error) -> Self { Error::TomlDeserialize(error) }
 }
 
-impl From<Error> for packster_core::error::Error {
+impl From<Error> for packster_core::Error {
     fn from(value: Error) -> Self {
-        packster_core::error::Error::Infrastructure(Box::new(value))
+        packster_core::Error::Infrastructure(Box::new(value))
     }
 }

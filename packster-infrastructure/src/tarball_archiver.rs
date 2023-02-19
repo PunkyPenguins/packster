@@ -1,7 +1,7 @@
 use std::{io::empty, path::Path, fmt};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
-use packster_core::port::{FileSystem, Archiver};
+use packster_core::{FileSystem, Archiver};
 use crate::{Result, Error};
 
 #[derive(Default)]

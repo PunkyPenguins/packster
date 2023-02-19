@@ -6,14 +6,18 @@
 
 const PACKAGE_EXENSION : &str = "packster";
 
-pub mod error;
+mod error;
 pub use error::Error;
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-pub mod path;
-pub mod entity;
+mod path;
+pub use path::NormalizedPath;
 
-pub mod port;
+mod entity;
+pub use entity::{Identifier, Project};
+
+mod port;
 pub use port::*;
 
-pub mod pack;
+mod pack;
+pub use pack::{ PackCommand, pack };

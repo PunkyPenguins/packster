@@ -13,6 +13,14 @@ Why did i use serde in core ? https://blog.eizinger.io/5835/rust-s-custom-derive
 Onion, hexa, clean ? https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)
 https://medium.com/ssense-tech/hexagonal-architecture-there-are-always-two-sides-to-every-story-bc0780ed7d9c
 
+
 ## About semver
 
 https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html
+
+
+## Dependency Management
+
+https://bit.dev
+https://blog.bitsrc.io/a-better-way-to-share-code-between-your-node-js-projects-af6fbadc3102
+https://webpack.js.org/concepts/module-federation/
