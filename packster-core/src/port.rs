@@ -21,7 +21,7 @@ pub trait ReadOnlyFileSystem : Sync + Send {
     fn is_file<P: AsRef<Path>>(&self, path: P) -> bool;
     fn is_directory<P: AsRef<Path>>(&self, path: P) -> bool;
     fn read_to_string<P: AsRef<Path>>(&self, path: P) -> Result<String>;
-    fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>>;
+    fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read + Send + Sync>>;
     fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a>;
     fn file_size<P: AsRef<Path>>(&self, path: P) -> Result<u64>;
 }
@@ -32,7 +32,7 @@ pub trait FileSystem : ReadOnlyFileSystem {
     fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<()>;
     fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()>;
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize>;
-    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>>;
+    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + Send + Sync + 'a>>;
 }
 
 pub trait Archiver : Sync + Send + Display {

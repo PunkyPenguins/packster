@@ -29,3 +29,7 @@ https://webpack.js.org/concepts/module-federation/
 ## About typestate
 
 https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-the-typestate-pattern-itself/
+
+## About reading a file and computing it's checksum at the same time with the same Read implementor
+
+ https://users.rust-lang.org/t/read-and-hash-sha1-at-the-same-time/54458/6

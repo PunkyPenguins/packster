@@ -60,14 +60,14 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
             }).unwrap()
     }
 
-    fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>> {
+    fn open_read<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
         if ! self.exists(path.as_ref()) { panic!("open_read: Path not found ! {:?}", path.as_ref()); }
         if ! self.is_file(path.as_ref()) { panic!("open_read:Path is not a file ! {:?}", path.as_ref()); }
 
         self.0.read().unwrap()
             .get(&NormalizedPath::from(path.as_ref()))
             .map(|node| match node {
-                Node::File(content) => Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read>),
+                Node::File(content) => Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read + Send + Sync>),
                 _ => { panic!("Path is not a file {:?}", path.as_ref()); }
             }).unwrap()
     }
@@ -158,7 +158,7 @@ impl FileSystem for InMemoryFileSystem {
         Ok(len)
     }
 
-    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>> {
+    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
         if self.is_directory(path.as_ref()) { panic!("open_write: Path is not a file ! {:?}", path.as_ref()); }
 
         Ok(

@@ -43,31 +43,27 @@ type Version = {
     patch: PositiveNumber
 }
 
-type ProjectIdentifier  = {
+type Project = {
     name: ProjectName,
     version: Version
 }
 
-type Asset = File
-type Project = {
-    identifier: ProjectIdentifier,
-    assets: Vec<Asset>
-}
-
 type Digest = Sha256 | Sha512
-type Checksum = { digester: Digest, value: bytes }
-type Archive = File
-type PackageIdentifier = Checksum
+type Digest = { digester: Digest, value: bytes }
+
+type Archiver = TarGz | Lzma
+type Archive = { archiver: Archiver, file: File }
+
+type PackageIdentifier = Digest
 type Package = {
     identifier: PackageIdentifier,
-    project_identifier: ProjectIdentifier,
+    project: Project,
     archive: Archive,
 }
 
-type DeploymentIdentifier = PackageIdentifier
 type Deployment = {
-    identifier: DeploymentIdentifier,
-    project_identifier: ProjectIdentifier,
+    package: Package,
+    project: Project,
     directory: Directory,
     constraint: MatchingVersionRequirement
 }

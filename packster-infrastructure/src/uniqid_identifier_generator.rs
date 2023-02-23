@@ -3,6 +3,7 @@ use uniqueid::{IdentifierBuilder, IdentifierType};
 
 pub struct UniqidIdentifierGenerator;
 
+//TODO add some logging and integration tests
 impl IdentifierGenerator for UniqidIdentifierGenerator {
     fn generate_identifier<S: AsRef<str>>(&self, name: S) -> String {
         let mut builder = IdentifierBuilder::default();

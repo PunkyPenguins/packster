@@ -26,3 +26,5 @@ impl Project {
         &self.version.0
     }
 }
+
+//TODO rework & extend according to type design

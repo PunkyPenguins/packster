@@ -10,6 +10,7 @@ use crate::{Result, Error};
 
 pub struct StdFileSystem;
 
+//TODO add some logging and integration tests
 impl ReadOnlyFileSystem for StdFileSystem {
     fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
         path.as_ref().exists()
@@ -27,7 +28,7 @@ impl ReadOnlyFileSystem for StdFileSystem {
         Ok(fs::read_to_string(path).map_err(Error::from)?)
     }
 
-    fn open_read<P: AsRef<Path>>(&self, path: P) -> Result<Box<dyn Read>> {
+    fn open_read<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
         Ok(Box::new(File::open(path).map_err(Error::from)?))
     }
 
@@ -78,7 +79,7 @@ impl FileSystem for StdFileSystem {
         Ok(File::open(path).map_err(Error::from)?.write(buf.as_ref()).map_err(Error::from)?)
     }
 
-    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + 'a>> {
+    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
         Ok(Box::new(File::create(path).map_err(Error::from)?))
     }
 }

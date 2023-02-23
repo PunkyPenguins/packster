@@ -29,16 +29,16 @@ impl PackOperation<New> {
     }
 }
 
-pub struct Identified {
+pub struct IdentifiedProject {
     pub project: Project,
     pub identifier: String
 }
 
 impl PackOperation<Project> {
-    pub fn generate_unique_identity<I: IdentifierGenerator>(self, identifier_generator: &I) -> PackOperation<Identified> {
+    pub fn generate_unique_identity<I: IdentifierGenerator>(self, identifier_generator: &I) -> PackOperation<IdentifiedProject> {
         Self::with_state(
             self.request,
-            Identified {
+            IdentifiedProject {
                 identifier: identifier_generator.generate_identifier(self.state.as_identifier()),
                 project: self.state
             }
@@ -46,20 +46,20 @@ impl PackOperation<Project> {
     }
 }
 
-pub struct Archived {
+pub struct ArchivedProject {
     pub project: Project,
     pub archive_path: PathBuf,
     pub archiver_representation: String
 }
 
-impl PackOperation<Identified> {
-    pub fn archive<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<PackOperation<Archived>> {
+impl PackOperation<IdentifiedProject> {
+    pub fn archive<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<PackOperation<ArchivedProject>> {
         let archive_path = self.request.package_output_directory
             .join(self.state.identifier)
             .with_extension("packster");
 
         archiver.archive(filesystem, &self.request.project_workspace, &archive_path)?;
-        let state = Archived {
+        let state = ArchivedProject {
             project: self.state.project,
             archiver_representation: archiver.to_string(),
             archive_path
@@ -68,17 +68,17 @@ impl PackOperation<Identified> {
     }
 }
 
-pub struct Digested {
-    pub archived: Archived,
+pub struct DigestedArchivedProject {
+    pub archived: ArchivedProject,
     pub digest: String,
     pub digester_representation: String
 }
 
-impl PackOperation<Archived> {
-    pub fn digest<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<PackOperation<Digested>> {
+impl PackOperation<ArchivedProject> {
+    pub fn digest<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<PackOperation<DigestedArchivedProject>> {
         let digest_bytes = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
         let digest = hex::encode(digest_bytes);
-        let state = Digested {
+        let state = DigestedArchivedProject {
             archived: self.state,
             digest,
             digester_representation: digester.to_string()
@@ -89,8 +89,8 @@ impl PackOperation<Archived> {
 
 pub struct Package; //TODO FROM DOMAIN !!
 
-impl PackOperation<Digested> {
-    pub fn finalized<F: FileSystem>(self, filesystem: &F) -> Result<Package> {
+impl PackOperation<DigestedArchivedProject> {
+    pub fn rename<F: FileSystem>(self, filesystem: &F) -> Result<Package> {
         let final_archive_name = format!(
             "{}_{}_{}_{}.{}.{}",
             self.state.archived.project.as_identifier(),
