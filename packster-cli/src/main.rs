@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use packster_core::operation::*;
+use packster_core::{operation::*, Result};
 use packster_infrastructure::{
     StdFileSystem,
     TomlParser,
@@ -13,7 +13,15 @@ mod pack;
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    std::process::exit(CommandLine::parse().execute())
+    std::process::exit(
+        match CommandLine::parse().execute() {
+            Ok(_) => 0,
+            Err(error) => {
+                eprintln!("{error}");
+                1
+            }
+        }
+    )
 }
 
 #[derive(Parser)]
@@ -24,19 +32,19 @@ struct CommandLine {
 }
 
 impl CommandLine {
-    pub fn execute(self) -> i32 {
+    pub fn execute(self) -> Result<()> {
         if let Some(command) = self.command {
             match command {
                 Command::Pack(pack_command) => Operation::new(pack_command.into(), New)
-                    .parse_project(&StdFileSystem, &TomlParser).unwrap() //TODO handle errors here
+                    .parse_project(&StdFileSystem, &TomlParser)?
                     .generate_unique_identity(&UniqidIdentifierGenerator)
-                    .archive(&StdFileSystem, &TarballArchiver).unwrap()
-                    .digest(&StdFileSystem, &Sha2Digester::Sha256).unwrap()
-                    .finalize(&StdFileSystem, CRATE_VERSION).unwrap()
+                    .archive(&StdFileSystem, &TarballArchiver)?
+                    .digest(&StdFileSystem, &Sha2Digester::Sha256)?
+                    .finalize(&StdFileSystem, CRATE_VERSION)?
             };
         }
 
-        0
+        Ok(())
     }
 }
 
