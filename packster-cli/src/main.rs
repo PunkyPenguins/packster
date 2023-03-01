@@ -30,7 +30,7 @@ impl CommandLine {
                     .generate_unique_identity(&UniqidIdentifierGenerator)
                     .archive(&StdFileSystem, &TarballArchiver).unwrap()
                     .digest(&StdFileSystem, &Sha2Digester::Sha256).unwrap()
-                    .rename(&StdFileSystem).unwrap()
+                    .finalize(&StdFileSystem).unwrap()
             };
         }
 

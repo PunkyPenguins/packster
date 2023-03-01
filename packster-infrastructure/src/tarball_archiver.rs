@@ -1,4 +1,4 @@
-use std::{io::{empty, Write}, path::Path, fmt};
+use std::{io::empty, path::Path, fmt};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
 use packster_core::{FileSystem, Archiver};

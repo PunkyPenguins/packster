@@ -1,8 +1,10 @@
 use std::path::{PathBuf, Path};
 
-use crate::{ReadOnlyFileSystem, Parser, Project, FileSystem, Archiver, Digester, IdentifierGenerator, Result};
+use crate::{ReadOnlyFileSystem, Parser, Project, FileSystem, Archiver, Digester, IdentifierGenerator, Result, domain::Package};
 
 use super::{Operation, New};
+
+//Project -> Package
 
 pub struct PackRequest {
     project_workspace: PathBuf,
@@ -70,14 +72,13 @@ impl PackOperation<IdentifiedProject> {
 
 pub struct DigestedArchivedProject {
     pub archived: ArchivedProject,
-    pub digest: String,
+    pub digest: Vec<u8>,
     pub digester_representation: String
 }
 
 impl PackOperation<ArchivedProject> {
     pub fn digest<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<PackOperation<DigestedArchivedProject>> {
-        let digest_bytes = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
-        let digest = hex::encode(digest_bytes);
+        let digest = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
         let state = DigestedArchivedProject {
             archived: self.state,
             digest,
@@ -87,22 +88,22 @@ impl PackOperation<ArchivedProject> {
     }
 }
 
-pub struct Package; //TODO FROM DOMAIN !!
-
 impl PackOperation<DigestedArchivedProject> {
-    pub fn rename<F: FileSystem>(self, filesystem: &F) -> Result<Package> {
-        let final_archive_name = format!(
-            "{}_{}_{}_{}.{}.{}",
-            self.state.archived.project.as_identifier(),
-            self.state.archived.project.as_version(),
-            self.state.digester_representation,
-            self.state.digest,
-            self.state.archived.archiver_representation,
-            "packster"
-        );
-        let final_archive_path = self.state.archived.archive_path.with_file_name(final_archive_name);
+    pub fn finalize<F: FileSystem>(self, filesystem: &F) -> Result<Package> {
+        let DigestedArchivedProject {
+            archived: ArchivedProject {
+                project,
+                archive_path,
+                archiver_representation
+            },
+            digest,
+            digester_representation
+        } = self.state;
 
-        filesystem.rename(self.state.archived.archive_path, final_archive_path)?;
-        Ok(Package)
+        let package = Package::new(project, digester_representation, archiver_representation, digest);
+        let final_archive_path = archive_path.with_file_name(package.file_name());
+
+        filesystem.rename(archive_path, final_archive_path)?;
+        Ok(package)
     }
 }

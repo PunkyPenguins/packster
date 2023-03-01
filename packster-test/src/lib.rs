@@ -62,7 +62,7 @@ mod test {
             .generate_unique_identity(&IdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
             .digest(&filesystem, &DigesterMock)?
-            .rename(&filesystem)?;
+            .finalize(&filesystem)?;
 
         assert!(filesystem.exists("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));
         assert!(filesystem.is_file("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));

@@ -1,6 +1,6 @@
 use std::{io::{self, Read}, fmt};
 use sha2::{Sha256, Digest};
-use packster_core::{Digester};
+use packster_core::Digester;
 use crate::{ Result, Error };
 
 //TODO add some logging and integration tests
