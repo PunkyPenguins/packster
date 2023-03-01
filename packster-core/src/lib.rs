@@ -4,7 +4,7 @@
 #![allow(unused_variables)]
 #![warn(clippy::all)]
 
-const PACKAGE_EXENSION : &str = "packster";
+pub const PACKAGE_EXTENSION : &str = "packster";
 
 mod error;
 pub use error::Error;

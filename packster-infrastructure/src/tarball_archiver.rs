@@ -1,4 +1,4 @@
-use std::{io::empty, path::Path, fmt};
+use std::{io::empty, path::Path};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
 use packster_core::{FileSystem, Archiver};
@@ -37,12 +37,5 @@ impl Archiver for TarballArchiver {
         }
 
         Ok(())
-    }
-}
-
-
-impl fmt::Display for TarballArchiver {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tar.gz")
     }
 }

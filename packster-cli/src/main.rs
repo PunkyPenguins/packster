@@ -10,6 +10,8 @@ use packster_infrastructure::{
 
 mod pack;
 
+pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     std::process::exit(CommandLine::parse().execute())
 }
@@ -30,7 +32,7 @@ impl CommandLine {
                     .generate_unique_identity(&UniqidIdentifierGenerator)
                     .archive(&StdFileSystem, &TarballArchiver).unwrap()
                     .digest(&StdFileSystem, &Sha2Digester::Sha256).unwrap()
-                    .finalize(&StdFileSystem).unwrap()
+                    .finalize(&StdFileSystem, CRATE_VERSION).unwrap()
             };
         }
 

@@ -3,6 +3,8 @@ use std::fmt;
 // use semver::Version;
 use serde::Deserialize;
 
+use crate::{PACKAGE_EXTENSION};
+
 #[derive(Deserialize)]
 // #[serde(try_from = "String")]
 pub struct Identifier(String);
@@ -15,6 +17,16 @@ impl fmt::Display for Identifier {
 
 #[derive(Deserialize)]
 pub struct Version(String);
+
+impl Version {
+    pub fn new<S: AsRef<str>>(version_str: S) -> Self {
+        Version(version_str.as_ref().to_owned())
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -41,35 +53,30 @@ impl Project {
     }
 }
 
-const PACKAGE_EXTENSION : &str = "packster";
-
 pub struct Package {
     identifier: Identifier,
     version: Version,
-    digester_representation: String, //TODO enum instead ?
     digest: Vec<u8>,
-    archiver_representation: String //TODO enum instead ?
+    packster_version: Version
 }
 
 impl Package {
-    pub fn new(project: Project, digester_representation: String, archiver_representation: String, digest: Vec<u8>) -> Self {
+    pub fn new(project: Project, digest: Vec<u8>, packster_version: Version) -> Self {
         Package {
             identifier: project.identifier,
             version: project.version,
-            digester_representation,
             digest,
-            archiver_representation
+            packster_version
         }
     }
 
     pub fn file_name(&self) -> String {
         format!(
-            "{}_{}_{}_{}.{}.{}",
+            "{}_{}_{}.{}.{}",
             self.identifier,
             self.version,
-            self.digester_representation,
             hex::encode(&self.digest),
-            self.archiver_representation,
+            hex::encode(self.packster_version.as_bytes()),
             PACKAGE_EXTENSION
         )
     }

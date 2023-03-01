@@ -1,4 +1,4 @@
-use std::{io::{self, Read}, fmt};
+use std::{io::{self, Read}};
 use sha2::{Sha256, Digest};
 use packster_core::Digester;
 use crate::{ Result, Error };
@@ -22,14 +22,6 @@ impl Digester for Sha2Digester {
                 io::copy(&mut reader, &mut hasher).map_err(Error::from)?;
                 Ok(hasher.finalize().to_vec())
             }
-        }
-    }
-}
-
-impl fmt::Display for Sha2Digester {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Sha256 => write!(f, "sha256")
         }
     }
 }

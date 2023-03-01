@@ -1,4 +1,4 @@
-use std::{path::Path, io::{Read, Write}, fmt::Display};
+use std::{path::Path, io::{Read, Write}};
 use serde::de::DeserializeOwned;
 
 use crate::{Result, path::NormalizedPath};
@@ -35,12 +35,12 @@ pub trait FileSystem : ReadOnlyFileSystem {
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + Send + Sync + 'a>>;
 }
 
-pub trait Archiver : Sync + Send + Display {
+pub trait Archiver : Sync + Send {
     fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()>;
     // fn unarchive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> Result<()>;
 }
 
-pub trait Digester : Sync + Send + Display {
+pub trait Digester : Sync + Send {
     fn generate_checksum<R: Read>(&self, reader: R) -> Result<Vec<u8>>;
     // fn verify_checksum<R: Read>(&self, reader: R, checksum: &[u8]) -> bool;
 }

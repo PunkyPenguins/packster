@@ -1,8 +1,6 @@
-
-
 #[cfg(test)]
 mod test {
-    use std::{io::Read, fmt};
+    use std::io::Read;
     use indoc::indoc;
 
     use packster_core::{
@@ -28,12 +26,6 @@ mod test {
             }
         }
 
-        impl fmt::Display for DigesterMock {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "mock")
-            }
-        }
-
         pub struct IdentifierGeneratorMock;
 
         impl IdentifierGenerator for IdentifierGeneratorMock {
@@ -56,16 +48,20 @@ mod test {
 
         filesystem.write_all("project/packster.toml", manifest.as_bytes())?;
 
+        const APP_VERSION : &str = "0.1.4";
+
         let filesystem_as_archiver = InMemoryFileSystem::default();
         Operation::new(PackRequest::new("project", "repo"),New)
             .parse_project(&filesystem, &TomlParser)?
             .generate_unique_identity(&IdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
             .digest(&filesystem, &DigesterMock)?
-            .finalize(&filesystem)?;
+            .finalize(&filesystem, APP_VERSION)?;
 
-        assert!(filesystem.exists("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));
-        assert!(filesystem.is_file("repo/static-package-a_0.0.1_mock_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.mock.packster"));
+        let package_path = format!("repo/static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.{}.packster", hex::encode(APP_VERSION.as_bytes()));
+
+        assert!(filesystem.exists(&package_path));
+        assert!(filesystem.is_file(package_path));
 
         assert!(filesystem_as_archiver.is_file("packster.toml"));
         assert!(filesystem_as_archiver.is_file("hello_world.txt"));
