@@ -1,5 +1,7 @@
 use std::{path::{PathBuf, Path, Component}};
 
+use serde::{Serialize, Deserialize};
+
 use crate::{Result, Error};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
@@ -42,7 +44,7 @@ pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf { //TODO MORE UT
     buffer
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug, Deserialize, Serialize)]
 pub struct AbsolutePath(PathBuf);
 
 impl AbsolutePath {
@@ -129,3 +131,5 @@ pub fn test_normalize_path_handle_different_separators(){
     let path = PathBuf::from("C:\\this/is\\a/test/of/inconstistant\\separators");
     assert_eq!(PathBuf::from("C:\\this\\is\\a\\test\\of\\inconstistant\\separators"), normalize_path(path))
 }
+
+//trait AsPath ?

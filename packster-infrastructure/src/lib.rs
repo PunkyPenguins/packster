@@ -19,8 +19,11 @@ pub use std_filesystem::StdFileSystem;
 mod uniqid_identifier_generator;
 pub use uniqid_identifier_generator::UniqidIdentifierGenerator;
 
-mod toml_parser;
-pub use toml_parser::TomlParser;
+mod toml;
+pub use crate::toml::Toml;
+
+mod json;
+pub use crate::json::Json;
 
 
 #[cfg(feature = "test")]

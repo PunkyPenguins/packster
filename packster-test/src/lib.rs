@@ -14,7 +14,7 @@ mod test {
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
-        TomlParser
+        Toml
     };
 
     #[test]
@@ -54,7 +54,7 @@ mod test {
         let filesystem_as_archiver = InMemoryFileSystem::default();
         let request = PackRequest::new(AbsolutePath::assume_absolute("/project"), AbsolutePath::assume_absolute("/repo"));
         Operation::new(request,New)
-            .parse_project(&filesystem, &TomlParser)?
+            .parse_project(&filesystem, &Toml)?
             .generate_unique_identity(&IdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
             .digest(&filesystem, &DigesterMock)?

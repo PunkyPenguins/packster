@@ -2,14 +2,16 @@ use clap::{Parser, Subcommand};
 use packster_core::{operation::*, Result};
 use packster_infrastructure::{
     StdFileSystem,
-    TomlParser,
+    Toml,
     UniqidIdentifierGenerator,
     Sha2Digester,
-    TarballArchiver
+    TarballArchiver,
+    Json
 };
 
-mod pack;
 mod parse;
+mod pack;
+mod init_location;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -38,11 +40,22 @@ impl CommandLine {
         if let Some(command) = self.command {
             match command {
                 Command::Pack(pack_command) => Operation::new(pack_command.into(), New)
-                    .parse_project(&StdFileSystem, &TomlParser)?
+                    .parse_project(&StdFileSystem, &Toml)?
                     .generate_unique_identity(&UniqidIdentifierGenerator)
                     .archive(&StdFileSystem, &TarballArchiver)?
                     .digest(&StdFileSystem, &Sha2Digester::Sha256)?
-                    .finalize(&StdFileSystem, CRATE_VERSION)?
+                    .finalize(&StdFileSystem, CRATE_VERSION)
+                    .map(
+                        |package|
+                            println!("Package created : {}", package.get_state().file_name())
+                    )?
+                ,
+                Command::InitLocation(init_location) => Operation::new(init_location.into(), New)
+                    .initialize_lockfile(&StdFileSystem, &Json)
+                    .map(
+                        |op|
+                        println!("Empty deployment created at : {}", op.get_request().as_location_directory().as_path().to_string_lossy())
+                    )?
             };
         }
 
@@ -52,5 +65,6 @@ impl CommandLine {
 
 #[derive(Subcommand)]
 enum Command {
-    Pack(pack::PackCommand)
+    Pack(pack::PackCommand),
+    InitLocation(init_location::InitLocationCommand)
 }

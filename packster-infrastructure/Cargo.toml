@@ -12,6 +12,7 @@ walkdir = "2.3.2"
 uniqueid = "0.2.6"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.7.0"
+serde_json = "1.0.93"
 
 [features]
 test = []

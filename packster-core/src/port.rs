@@ -1,5 +1,5 @@
 use std::{path::Path, io::{Read, Write}};
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, ser::Serialize};
 
 use crate::{Result, AbsolutePath};
 
@@ -51,4 +51,8 @@ pub trait IdentifierGenerator : Sync + Send {
 
 pub trait Parser {
     fn parse<S: AsRef<str>, T: DeserializeOwned>(&self, s: S) -> Result<T>;
+}
+
+pub trait Serializer {
+    fn serialize<T: Serialize>(&self, value: &T) -> Result<String>;
 }

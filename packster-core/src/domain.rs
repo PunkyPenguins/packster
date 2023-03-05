@@ -1,9 +1,9 @@
 use std::fmt;
 
 // use semver::Version;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{PACKAGE_EXTENSION};
+use crate::{PACKAGE_EXTENSION, AbsolutePath};
 
 #[derive(Deserialize)]
 // #[serde(try_from = "String")]
@@ -82,6 +82,10 @@ impl Package {
     }
 }
 
-pub struct DeployLocation {
+#[derive(Serialize, Deserialize)]
+pub struct Deployment {}
 
+#[derive(Serialize, Deserialize, Default)]
+pub struct DeployLocation {
+    deployments: Vec<Deployment>
 }

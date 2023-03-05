@@ -1,4 +1,4 @@
-use std::{fmt,error, path::{PathBuf, StripPrefixError}};
+use std::{fmt,error, path::PathBuf};
 
 use crate::AbsolutePath;
 
@@ -12,6 +12,8 @@ pub enum Error {
     BaseNotInPath { base: AbsolutePath, path: AbsolutePath },
     PathIsAbsolute(PathBuf),
     PathIsRelative(PathBuf),
+    LocationPathIsNotADirectory(PathBuf),
+    LocationManifestPathIsNotAFile(PathBuf),
 }
 
 impl fmt::Display for Error {
@@ -25,7 +27,9 @@ impl fmt::Display for Error {
             MissingMandatoryField { entity_name, field_name } => write!(f, "Missing infrastructure field {entity_name} for entity {field_name}"),
             PathIsAbsolute(path) => write!(f, "Path is absolute : {}", path.to_string_lossy()),
             PathIsRelative(path) => write!(f, "Path is relative : {}", path.to_string_lossy()),
-            BaseNotInPath { base, path } => write!(f, "Base \"{}\" not in path \"{}\"", base.as_path().to_string_lossy(), path.as_path().to_string_lossy())
+            BaseNotInPath { base, path } => write!(f, "Base \"{}\" not in path \"{}\"", base.as_path().to_string_lossy(), path.as_path().to_string_lossy()),
+            LocationPathIsNotADirectory(path) => write!(f, "Location path exists but is not a directory {}", path.to_string_lossy()),
+            LocationManifestPathIsNotAFile(path) => write!(f, "Location manifest path exists but is not a file {}", path.to_string_lossy())
         }
     }
 }

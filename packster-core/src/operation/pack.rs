@@ -98,7 +98,7 @@ impl PackOperation<ArchivedProject> {
 }
 
 impl PackOperation<DigestedArchivedProject> {
-    pub fn finalize<F: FileSystem>(self, filesystem: &F, packster_version: &str) -> Result<Package> {
+    pub fn finalize<F: FileSystem>(self, filesystem: &F, packster_version: &str) -> Result<PackOperation<Package>> {
         let DigestedArchivedProject {
             digest,
             archived: ArchivedProject {
@@ -111,6 +111,6 @@ impl PackOperation<DigestedArchivedProject> {
         let final_archive_path = archive_path.with_file_name(package.file_name());
 
         filesystem.rename(archive_path, final_archive_path)?;
-        Ok(package)
+        Ok(Self::with_state(self.request, package))
     }
 }
