@@ -55,7 +55,12 @@ impl AbsolutePath {
     }
 
     pub fn try_to_relative(&self, base: &AbsolutePath) -> Result<RelativePath> {
-        Ok(RelativePath::assume_relative(self.0.strip_prefix(base)?)) //TODO enhance errors
+        Ok(
+            RelativePath::assume_relative(
+                self.0.strip_prefix(base)
+                    .map_err(|_| Error::BaseNotInPath { base: base.clone(), path: self.clone() })?
+            )
+        )
     }
 }
 

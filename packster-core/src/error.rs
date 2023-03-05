@@ -1,5 +1,7 @@
 use std::{fmt,error, path::{PathBuf, StripPrefixError}};
 
+use crate::AbsolutePath;
+
 #[derive(Debug)]
 pub enum Error {
     Infrastructure(Box<dyn error::Error>),
@@ -7,7 +9,7 @@ pub enum Error {
     ManifesPathIsADirectory(PathBuf),
     ManifestPathDoesNotExist(PathBuf),
     MissingMandatoryField { entity_name: &'static str, field_name: &'static str },
-    StripPrefixError(StripPrefixError),
+    BaseNotInPath { base: AbsolutePath, path: AbsolutePath },
     PathIsAbsolute(PathBuf),
     PathIsRelative(PathBuf),
 }
@@ -23,7 +25,7 @@ impl fmt::Display for Error {
             MissingMandatoryField { entity_name, field_name } => write!(f, "Missing infrastructure field {entity_name} for entity {field_name}"),
             PathIsAbsolute(path) => write!(f, "Path is absolute : {}", path.to_string_lossy()),
             PathIsRelative(path) => write!(f, "Path is relative : {}", path.to_string_lossy()),
-            StripPrefixError(error) => write!(f, "Strip prefix error : {error}")
+            BaseNotInPath { base, path } => write!(f, "Base \"{}\" not in path \"{}\"", base.as_path().to_string_lossy(), path.as_path().to_string_lossy())
         }
     }
 }
@@ -34,13 +36,7 @@ impl error::Error for Error {
         match self {
             Infrastructure(error) => Some(error.as_ref()),
             Application(error) => Some(error.as_ref()),
-            StripPrefixError(error) => Some(error),
             _ => None,
         }
     }
-}
-
-
-impl From<StripPrefixError> for Error {
-    fn from(error: StripPrefixError) -> Self { Error::StripPrefixError(error) }
 }
