@@ -1,18 +1,18 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::de::DeserializeOwned;
 
-use crate::{Result, path::NormalizedPath};
+use crate::{Result, AbsolutePath};
 
 #[derive(Debug)]
 pub struct DirEntry {
-    path: NormalizedPath,
+    path: AbsolutePath,
     size: u64
 }
 
 impl DirEntry {
-    pub fn new(path: &Path, size: u64) -> Self { DirEntry { path: NormalizedPath::from(path), size } }
-    pub fn as_path(&self) -> &Path { &self.path }
-    pub fn as_normalized_path(&self) -> &NormalizedPath { &self.path }
+    pub fn new(path: AbsolutePath, size: u64) -> Self { DirEntry { path, size } }
+    pub fn as_path(&self) -> &Path { self.path.as_path() }
+    pub fn as_absolute_path(&self) -> &AbsolutePath { &self.path }
     pub fn size(&self) -> u64 { self.size }
 }
 
@@ -36,7 +36,7 @@ pub trait FileSystem : ReadOnlyFileSystem {
 }
 
 pub trait Archiver : Sync + Send {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()>;
+    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()>;
     // fn unarchive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> Result<()>;
 }
 

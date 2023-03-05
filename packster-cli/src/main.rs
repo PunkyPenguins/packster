@@ -9,8 +9,10 @@ use packster_infrastructure::{
 };
 
 mod pack;
+mod parse;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 
 fn main() {
     std::process::exit(

@@ -81,3 +81,7 @@ impl Package {
         )
     }
 }
+
+pub struct DeployLocation {
+
+}

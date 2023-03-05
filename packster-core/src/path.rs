@@ -1,48 +1,26 @@
-use std::{path::{PathBuf, Path, Component}, ops::Deref};
+use std::{path::{PathBuf, Path, Component}};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+use crate::{Result, Error};
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct NormalizedPath(PathBuf);
 
 
 impl NormalizedPath {
-    pub fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool {
-        child_path.as_ref()
-            .ancestors()
-            .map(|ancestor| NormalizedPath(ancestor.to_path_buf()))
-            .any(|ancestor| { ancestor == *self })
-    }
-
-    pub fn to_relative_path<P: AsRef<Path>>(&self, base: P) -> Self {
-        NormalizedPath(
-            self.0.strip_prefix(base.as_ref())
-                .unwrap_or(&self.0)
-                .to_path_buf()
-        )
-    }
-}
-
-impl From<&Path> for NormalizedPath {
-    fn from(path: &Path) -> Self {
-        NormalizedPath(normalize_path(path))
-    }
-}
-
-
-impl AsRef<Path> for NormalizedPath {
-    fn as_ref(&self) -> &Path {
+    pub fn as_path(&self) -> &Path {
         &self.0
     }
 }
 
-impl Deref for NormalizedPath {
-    type Target = Path;
-
-    fn deref(&self) -> &Path {
-        self.0.deref()
-    }
+impl From<&Path> for NormalizedPath {
+    fn from(path: &Path) -> Self { NormalizedPath(normalize_path(path)) }
 }
 
-pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf {
+impl AsRef<Path> for NormalizedPath {
+    fn as_ref(&self) -> &Path { &self.0 }
+}
+
+pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf { //TODO MORE UT
     let path = path_ref.as_ref();
 
     let mut buffer = PathBuf::new();
@@ -62,6 +40,83 @@ pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf {
     }
 
     buffer
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
+pub struct AbsolutePath(PathBuf);
+
+impl AbsolutePath {
+    pub fn assume_absolute<P: AsRef<Path>>(path: P) -> Self {
+        AbsolutePath(path.as_ref().to_path_buf())
+    }
+
+    pub fn as_path(&self) -> &Path {
+        &self.0
+    }
+
+    pub fn try_to_relative(&self, base: &AbsolutePath) -> Result<RelativePath> {
+        Ok(RelativePath::assume_relative(self.0.strip_prefix(base)?)) //TODO enhance errors
+    }
+}
+
+impl TryFrom<&Path> for AbsolutePath {
+    type Error = Error;
+    fn try_from(path: &Path) -> Result<Self> {
+        if path.is_relative() {
+            Err(Error::PathIsRelative(path.to_path_buf()))
+        } else {
+            Ok(AbsolutePath::assume_absolute(path))
+        }
+     }
+}
+
+impl AsRef<Path> for AbsolutePath {
+    fn as_ref(&self) -> &Path { &self.0 }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct RelativePath(PathBuf);
+
+impl TryFrom<&Path> for RelativePath {
+    type Error = Error;
+    fn try_from(path: &Path) -> Result<Self> {
+        if path.is_absolute() {
+            Err(Error::PathIsAbsolute(path.to_path_buf()))
+        } else {
+            Ok(RelativePath::assume_relative(path))
+        }
+    }
+}
+
+impl <'a>AsRef<Path> for &'a RelativePath {
+    fn as_ref(&self) -> &Path { &self.0 }
+}
+
+impl RelativePath {
+    pub fn assume_relative<P: AsRef<Path>>(path: P) -> Self {
+       RelativePath(path.as_ref().to_path_buf())
+    }
+
+    pub fn as_path(&self) -> &Path {
+        &self.0
+    }
+}
+
+pub trait PathExt {
+    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
+    fn to_normalized_path(&self) -> NormalizedPath;
+}
+
+impl PathExt for &Path {
+    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool { //TODO UT
+        child_path.as_ref()
+            .ancestors()
+            .any(|ancestor| { ancestor.to_normalized_path() == self.to_normalized_path() })
+    }
+
+    fn to_normalized_path(&self) -> NormalizedPath {
+        NormalizedPath::from(*self)
+    }
 }
 
 #[test]

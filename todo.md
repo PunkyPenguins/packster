@@ -68,9 +68,9 @@ type Deployment = {
     constraint: MatchingVersionRequirement
 }
 
-type ContainerDirectory = ExistingDirectory
-type Container = {
-    directory: ContainerDirectory,
+type LocationDirectory = ExistingDirectory
+type Location = {
+    directory: LocationDirectory,
     deployment_list: Vec<Deployment>
 }
 
@@ -80,11 +80,14 @@ type Bundle = Vec<VersionRequirement>
 fn verify_directory_exists = Directory -> ExistingDirectory
 fn match_version_requirement = (VersionRequirement * Version) -> MatchingVersionRequirement
 fn pack_project = Project -> Package
-fn deploy_package = (Package * ContainerDirectory) -> Container
-fn list_deployed = ContainerDirectory -> Container
-fn undeploy = (DeploymentIdentifier * ContainerDirectory) -> Container
 
-fn install_bundle = (Bundle * Container) -> Container
+fn deploy_package = (Package * Location) -> Location
+
+fn list_deployed = LocationDirectory -> Location
+fn undeploy = (DeploymentIdentifier * LocationDirectory) -> Location
+
+fn install_bundle = (Bundle * Location) -> Location
+
 
 
 ## Later
@@ -93,7 +96,7 @@ Dependency
 Parameter / Feature ?
 DefaultInstallLocation
 Resource
-    Container
+    Location
     ExecutableInPath
     SharedDirectory
 ResourceRequirement
@@ -134,4 +137,26 @@ struct PackCommand<S> {
     package_path: PathBuf,
     state: S
 }
+
+
+
+verifiy_project_manifest_path = PathBuf -> Result<PathBuf, Error>
+
+packster.exe location create
+Create DeploymentLocation
+- creer un dossier ( vide )
+- creer un lockfile.json ( avec une liste de déploiement vide )
+
+
+packster.exe package install
+"Install"
+Verify package integrity (checksum)
+Verify that the package is not already present in the location <= TODO test
+Unarchive
+
+
+## Prochaine session
+
+Dadou code la création de Location et je le supervise
+
 

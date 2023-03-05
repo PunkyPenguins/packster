@@ -9,7 +9,8 @@ mod test {
         FileSystem,
         IdentifierGenerator,
         Result,
-        operation::{PackRequest, Operation, New}
+        operation::{PackRequest, Operation, New},
+        AbsolutePath
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
@@ -35,10 +36,10 @@ mod test {
         }
 
         let filesystem = InMemoryFileSystem::default();
-        filesystem.create_dir("project")?;
-        filesystem.create_dir("repo")?;
-        filesystem.write_all("project/hello_world.txt", b"Hello world !")?;
-        filesystem.create("project/packster.toml")?;
+        filesystem.create_dir("/project")?;
+        filesystem.create_dir("/repo")?;
+        filesystem.write_all("/project/hello_world.txt", b"Hello world !")?;
+        filesystem.create("/project/packster.toml")?;
 
 
         let manifest = indoc!{r#"
@@ -46,19 +47,20 @@ mod test {
             version = "0.0.1"
         "#};
 
-        filesystem.write_all("project/packster.toml", manifest.as_bytes())?;
+        filesystem.write_all("/project/packster.toml", manifest.as_bytes())?;
 
         const APP_VERSION : &str = "0.1.4";
 
         let filesystem_as_archiver = InMemoryFileSystem::default();
-        Operation::new(PackRequest::new("project", "repo"),New)
+        let request = PackRequest::new(AbsolutePath::assume_absolute("/project"), AbsolutePath::assume_absolute("/repo"));
+        Operation::new(request,New)
             .parse_project(&filesystem, &TomlParser)?
             .generate_unique_identity(&IdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
             .digest(&filesystem, &DigesterMock)?
             .finalize(&filesystem, APP_VERSION)?;
 
-        let package_path = format!("repo/static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.{}.packster", hex::encode(APP_VERSION.as_bytes()));
+        let package_path = format!("/repo/static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.{}.packster", hex::encode(APP_VERSION.as_bytes()));
 
         assert!(filesystem.exists(&package_path));
         assert!(filesystem.is_file(package_path));

@@ -33,3 +33,7 @@ https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-the-types
 ## About reading a file and computing it's checksum at the same time with the same Read implementor
 
  https://users.rust-lang.org/t/read-and-hash-sha1-at-the-same-time/54458/6
+
+## About package managers
+
+https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527

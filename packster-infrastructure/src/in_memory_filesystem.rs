@@ -7,11 +7,13 @@ use std::{
 };
 
 use packster_core::{
+    PathExt,
     FileSystem,
     ReadOnlyFileSystem,
     DirEntry,
     Archiver,
-    NormalizedPath
+    NormalizedPath,
+    AbsolutePath
 };
 use crate::{Result, Error};
 
@@ -62,7 +64,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
 
     fn open_read<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
         if ! self.exists(path.as_ref()) { panic!("open_read: Path not found ! {:?}", path.as_ref()); }
-        if ! self.is_file(path.as_ref()) { panic!("open_read:Path is not a file ! {:?}", path.as_ref()); }
+        if ! self.is_file(path.as_ref()) { panic!("open_read: Path is not a file ! {:?}", path.as_ref()); }
 
         self.0.read().unwrap()
             .get(&NormalizedPath::from(path.as_ref()))
@@ -79,11 +81,11 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
             .iter()
             .filter(move |(node_path, _)|
                 &normalized_target_path != *node_path
-                && normalized_target_path.is_ancestor_of(*node_path)
+                && normalized_target_path.as_path().is_ancestor_of(*node_path)
             ).map(|(node_path, _)|
                 self.file_size(node_path)
                     .map(|size|
-                        DirEntry::new(node_path, size)
+                        DirEntry::new(AbsolutePath::assume_absolute(node_path), size)
                     )
             ).collect();
 
@@ -92,8 +94,12 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
 
     fn file_size<P: AsRef<Path>>(&self, path: P) -> Result<u64> {
         let mut buffer = Vec::new();
-        self.open_read(path)?.read_to_end(&mut buffer).map_err(Error::from)?;
-        Ok(buffer.len() as u64)
+        if self.is_directory(&path) {
+            Ok(0)
+        } else {
+            self.open_read(&path)?.read_to_end(&mut buffer).map_err(Error::from)?;
+            Ok(buffer.len() as u64)
+        }
     }
 }
 
@@ -188,19 +194,19 @@ impl <'a>Write for InMemoryFile<'a> {
 }
 
 impl Archiver for InMemoryFileSystem {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
+    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()> {
         filesystem.create(archive_path.as_ref())?;
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
             let found_entry = found_entry_result?;
-            let relative_path = found_entry.as_normalized_path().to_relative_path(project_path.as_ref());
+            let relative_path = found_entry.as_absolute_path().try_to_relative(project_path)?;
 
             if filesystem.is_file(found_entry.as_path()) {
                 let mut reader = filesystem.open_read(found_entry.as_path())?;
-                let mut writer = self.open_write(relative_path)?;
+                let mut writer = self.open_write(&relative_path)?;
                 io::copy(&mut reader, &mut writer).map_err(Error::from)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
-                self.create_dir(relative_path)?;
+                self.create_dir(&relative_path)?;
             }
         }
 

@@ -1,24 +1,21 @@
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 
 use crate::{
     Result,
     ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, IdentifierGenerator,
-    domain::{Project, Package, Version}, PACKAGE_EXTENSION
+    domain::{Project, Package, Version}, PACKAGE_EXTENSION, AbsolutePath
 };
 
 use super::{Operation, New};
 
 pub struct PackRequest {
-    project_workspace: PathBuf,
-    package_output_directory: PathBuf,
+    project_workspace: AbsolutePath,
+    package_output_directory: AbsolutePath,
 }
 
 impl PackRequest {
-    pub fn new<P: AsRef<Path>>(project_workspace: P, package_output_directory: P) -> Self {
-        PackRequest {
-            project_workspace: project_workspace.as_ref().to_owned(),
-            package_output_directory: package_output_directory.as_ref().to_owned()
-        }
+    pub fn new(project_workspace: AbsolutePath, package_output_directory: AbsolutePath) -> Self {
+        PackRequest { project_workspace, package_output_directory }
     }
 }
 
@@ -26,7 +23,7 @@ pub type PackOperation<S> = Operation<S, PackRequest>;
 
 impl PackOperation<New> {
     pub fn parse_project<F: ReadOnlyFileSystem, P: Parser>(self, filesystem: &F, parser: &P) -> Result<PackOperation<Project>> {
-        let manifest_path = self.request.project_workspace.join("packster.toml");
+        let manifest_path = self.request.project_workspace.as_path().join("packster.toml");
 
         let raw_manifest_string = filesystem.read_to_string(manifest_path)?;
         Ok(Self::with_state(self.request, parser.parse(raw_manifest_string)?))
@@ -58,6 +55,7 @@ pub struct ArchivedProject {
 impl PackOperation<IdentifiedProject> {
     pub fn archive<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<PackOperation<ArchivedProject>> {
         let archive_path = self.request.package_output_directory
+            .as_path()
             .join(self.state.identifier)
             .with_extension(PACKAGE_EXTENSION);
 

@@ -1,7 +1,7 @@
 use std::{io::empty, path::Path};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
-use packster_core::{FileSystem, Archiver};
+use packster_core::{FileSystem, Archiver, AbsolutePath};
 use crate::{Result, Error};
 
 #[derive(Default)]
@@ -9,16 +9,17 @@ pub struct TarballArchiver;
 
 //TODO add some logging and integration tests
 impl Archiver for TarballArchiver {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: P, archive_path: P) -> Result<()> {
+    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()> {
         let writer = filesystem.open_write(archive_path)?;
         let encoder = GzEncoder::new(writer, Compression::default());
         let mut tar_builder = Builder::new(encoder);
+
         for found_entry_result in filesystem.walk(project_path.as_ref()) { //TODO optimize with rayon since fs support sending Send + Sync descriptors
             let found_entry = found_entry_result?;
             if found_entry.as_path() == project_path.as_ref() {
                 continue;
             }
-            let found_relative_path = found_entry.as_normalized_path().to_relative_path(project_path.as_ref());
+            let found_relative_path = found_entry.as_absolute_path().try_to_relative(project_path)?;
 
             let mut header = Header::new_gnu();
 
@@ -32,7 +33,7 @@ impl Archiver for TarballArchiver {
                 tar_builder.append_data(&mut header, &found_relative_path, reader).map_err(Error::from)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
                 header.set_entry_type(EntryType::Directory);
-                tar_builder.append_data(&mut header, found_relative_path, empty()).map_err(Error::from)?;
+                tar_builder.append_data(&mut header, &found_relative_path, empty()).map_err(Error::from)?;
             }
         }
 

@@ -1,4 +1,4 @@
-use std::{fmt,error, path::PathBuf};
+use std::{fmt,error, path::{PathBuf, StripPrefixError}};
 
 #[derive(Debug)]
 pub enum Error {
@@ -6,7 +6,10 @@ pub enum Error {
     Application(Box<dyn error::Error>),
     ManifesPathIsADirectory(PathBuf),
     ManifestPathDoesNotExist(PathBuf),
-    MissingMandatoryField { entity_name: &'static str, field_name: &'static str }
+    MissingMandatoryField { entity_name: &'static str, field_name: &'static str },
+    StripPrefixError(StripPrefixError),
+    PathIsAbsolute(PathBuf),
+    PathIsRelative(PathBuf),
 }
 
 impl fmt::Display for Error {
@@ -17,7 +20,10 @@ impl fmt::Display for Error {
             Application(error) => write!(f, "Application error : {error}"),
             ManifesPathIsADirectory(path) => write!(f, "Manifest path is not a directory : {}", path.to_string_lossy()),
             ManifestPathDoesNotExist(path) => write!(f, "Manifest path does not exist : {}", path.to_string_lossy()),
-            MissingMandatoryField { entity_name, field_name } => write!(f, "Missing infrastructure field {entity_name} for entity {field_name}")
+            MissingMandatoryField { entity_name, field_name } => write!(f, "Missing infrastructure field {entity_name} for entity {field_name}"),
+            PathIsAbsolute(path) => write!(f, "Path is absolute : {}", path.to_string_lossy()),
+            PathIsRelative(path) => write!(f, "Path is relative : {}", path.to_string_lossy()),
+            StripPrefixError(error) => write!(f, "Strip prefix error : {error}")
         }
     }
 }
@@ -28,9 +34,13 @@ impl error::Error for Error {
         match self {
             Infrastructure(error) => Some(error.as_ref()),
             Application(error) => Some(error.as_ref()),
-            ManifesPathIsADirectory(_) => None,
-            ManifestPathDoesNotExist(_) => None,
-            MissingMandatoryField { .. } => None
+            StripPrefixError(error) => Some(error),
+            _ => None,
         }
     }
+}
+
+
+impl From<StripPrefixError> for Error {
+    fn from(error: StripPrefixError) -> Self { Error::StripPrefixError(error) }
 }

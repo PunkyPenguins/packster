@@ -11,7 +11,7 @@ pub use error::Error;
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 mod path;
-pub use path::NormalizedPath;
+pub use path::{ PathExt, AbsolutePath, RelativePath, NormalizedPath };
 
 mod domain;
 pub use domain::{Identifier, Project};
