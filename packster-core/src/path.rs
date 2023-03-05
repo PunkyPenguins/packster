@@ -7,13 +7,6 @@ use crate::{Result, Error};
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct NormalizedPath(PathBuf);
 
-
-impl NormalizedPath {
-    pub fn as_path(&self) -> &Path {
-        &self.0
-    }
-}
-
 impl From<&Path> for NormalizedPath {
     fn from(path: &Path) -> Self { NormalizedPath(normalize_path(path)) }
 }
@@ -50,10 +43,6 @@ pub struct AbsolutePath(PathBuf);
 impl AbsolutePath {
     pub fn assume_absolute<P: AsRef<Path>>(path: P) -> Self {
         AbsolutePath(path.as_ref().to_path_buf())
-    }
-
-    pub fn as_path(&self) -> &Path {
-        &self.0
     }
 
     pub fn try_to_relative(&self, base: &AbsolutePath) -> Result<RelativePath> {
@@ -102,10 +91,6 @@ impl <'a>AsRef<Path> for &'a RelativePath {
 impl RelativePath {
     pub fn assume_relative<P: AsRef<Path>>(path: P) -> Self {
        RelativePath(path.as_ref().to_path_buf())
-    }
-
-    pub fn as_path(&self) -> &Path {
-        &self.0
     }
 }
 

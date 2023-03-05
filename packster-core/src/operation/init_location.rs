@@ -24,13 +24,13 @@ pub struct ExistingDeployLocation(DeployLocation);
 
 impl InitLocationOperation<New> {
     pub fn initialize_lockfile<F: FileSystem, S: Serializer + Parser >(self, filesystem: &F, serde: &S) -> Result<InitLocationOperation<ExistingDeployLocation>> {
-        let lockfile_path = self.request.location_directory.as_path().join(LOCKFILE_NAME);
+        let lockfile_path = self.request.location_directory.as_ref().join(LOCKFILE_NAME);
         if filesystem.is_file(&lockfile_path) {
              Ok(Self::with_state(self.request, ExistingDeployLocation(serde.parse(filesystem.read_to_string(lockfile_path)?)?)))
         } else if filesystem.is_directory(&lockfile_path) {
             Err(Error::LocationManifestPathIsNotAFile(lockfile_path))
         } else {
-            let location_path = self.request.location_directory.as_path();
+            let location_path = self.request.location_directory.as_ref();
             if ! filesystem.is_directory(location_path) {
                 filesystem.create_dir(location_path)?
             }

@@ -11,7 +11,7 @@ pub struct DirEntry {
 
 impl DirEntry {
     pub fn new(path: AbsolutePath, size: u64) -> Self { DirEntry { path, size } }
-    pub fn as_path(&self) -> &Path { self.path.as_path() }
+    pub fn as_path(&self) -> &Path { self.path.as_ref() }
     pub fn as_absolute_path(&self) -> &AbsolutePath { &self.path }
     pub fn size(&self) -> u64 { self.size }
 }

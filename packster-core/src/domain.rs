@@ -3,7 +3,7 @@ use std::fmt;
 // use semver::Version;
 use serde::{Deserialize, Serialize};
 
-use crate::{PACKAGE_EXTENSION, AbsolutePath};
+use crate::PACKAGE_EXTENSION;
 
 #[derive(Deserialize)]
 // #[serde(try_from = "String")]

@@ -23,7 +23,7 @@ pub type PackOperation<S> = Operation<S, PackRequest>;
 
 impl PackOperation<New> {
     pub fn parse_project<F: ReadOnlyFileSystem, P: Parser>(self, filesystem: &F, parser: &P) -> Result<PackOperation<Project>> {
-        let manifest_path = self.request.project_workspace.as_path().join("packster.toml");
+        let manifest_path = self.request.project_workspace.as_ref().join("packster.toml");
 
         let raw_manifest_string = filesystem.read_to_string(manifest_path)?;
         Ok(Self::with_state(self.request, parser.parse(raw_manifest_string)?))
@@ -55,7 +55,7 @@ pub struct ArchivedProject {
 impl PackOperation<IdentifiedProject> {
     pub fn archive<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<PackOperation<ArchivedProject>> {
         let archive_path = self.request.package_output_directory
-            .as_path()
+            .as_ref()
             .join(self.state.identifier)
             .with_extension(PACKAGE_EXTENSION);
 

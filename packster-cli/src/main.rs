@@ -54,7 +54,7 @@ impl CommandLine {
                     .initialize_lockfile(&StdFileSystem, &Json)
                     .map(
                         |op|
-                        println!("Empty deployment created at : {}", op.get_request().as_location_directory().as_path().to_string_lossy())
+                        println!("Empty deployment created at : {}", op.get_request().as_location_directory().as_ref().to_string_lossy())
                     )?
             };
         }
