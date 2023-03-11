@@ -1,5 +1,6 @@
 https://dev.to/equalma/validate-fields-and-types-in-serde-with-tryfrom-c2n
 https://serde.rs/field-attrs.html#deserialize_with
+https://www.yoctoproject.org
 
 ## About the use of result
 
@@ -37,3 +38,6 @@ https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-the-types
 ## About package managers
 
 https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527
+
+
+

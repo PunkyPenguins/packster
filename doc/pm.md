@@ -139,3 +139,31 @@ what not package medias in the same way ?
 
 // https://herbertograca.files.wordpress.com/2018/11/070-explicit-architecture-svg.png
 // https://youtu.be/qBLtZN3p3FU?t=1117
+
+
+## Target Features
+
+Cargo semver
+Multi-plateform package manager ( but potentially plateform-specific packages )
+
+- Packaging
+    - dependency manangement for packing needs
+    - Simple file packing
+    - script execution for packing
+    - Wrapping deb / rpm / snap / appimage / chocolatey / winget packages
+    - signing
+
+- Install / Upgrade / Uninstall
+    - dependency management at deployment
+    - script execution at deployment
+    - Integrity check
+    - Multiple, isolated package location
+    - Allow userspace package installation
+    - Supports multiple versions of the same package
+    - System-wide & local resources managements
+        - environment variables
+        - binary shims
+        - network ports
+        - shared directory
+    - Default version selection
+    - Default location selection

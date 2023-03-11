@@ -1,5 +1,4 @@
-use crate::{Result, AbsolutePath, FileSystem, Error, domain::DeployLocation, Parser, Serializer};
-
+use crate::{Result, AbsolutePath, FileSystem, Error, domain::DeployLocation, Parser, Serializer, LOCKFILE_NAME};
 use super::{Operation, New};
 
 pub struct InitLocationRequest {
@@ -17,8 +16,6 @@ impl InitLocationRequest {
 }
 
 pub type InitLocationOperation<S> = Operation<S, InitLocationRequest>;
-
-const LOCKFILE_NAME : &str = "packster.lock";
 
 pub struct ExistingDeployLocation(DeployLocation);
 

@@ -5,6 +5,7 @@
 #![warn(clippy::all)]
 
 pub const PACKAGE_EXTENSION : &str = "packster";
+pub const LOCKFILE_NAME : &str = "packster.lock";
 
 mod error;
 pub use error::Error;

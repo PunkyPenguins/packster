@@ -11,7 +11,7 @@ pub struct Operation<S, R>{
 
 pub struct New;
 
-
+//TODO doing rollback operation using same states newtype struct would be super easy and meaningful and stylish cause each state would be described as reversible, or not, or partially, or with different methods :O
 impl <S, R>Operation<S, R> {
     /*Create a new operation */
     pub fn new(request: R, state: S) -> Self {
