@@ -1,7 +1,12 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
-use crate::{Result, AbsolutePath};
+use crate::{Result, AbsolutePath, NormalizedPath};
+
+pub trait PathExt {
+    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
+    fn to_normalized_path(&self) -> NormalizedPath;
+}
 
 #[derive(Debug)]
 pub struct DirEntry {
