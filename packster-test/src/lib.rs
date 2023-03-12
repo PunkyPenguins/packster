@@ -7,7 +7,7 @@ mod test {
         Digester,
         ReadOnlyFileSystem,
         FileSystem,
-        IdentifierGenerator,
+        UniqueIdentifierGenerator,
         Result,
         operation::{PackRequest, Operation, New},
         AbsolutePath
@@ -27,10 +27,10 @@ mod test {
             }
         }
 
-        pub struct IdentifierGeneratorMock;
+        pub struct UniqueIdentifierGeneratorMock;
 
-        impl IdentifierGenerator for IdentifierGeneratorMock {
-            fn generate_identifier<S: AsRef<str>>(&self, _name: S) -> String {
+        impl UniqueIdentifierGenerator for UniqueIdentifierGeneratorMock {
+            fn generate_identifier(&self) -> String {
                 String::from("123456")
             }
         }
@@ -55,7 +55,7 @@ mod test {
         let request = PackRequest::new(AbsolutePath::assume_absolute("/project"), AbsolutePath::assume_absolute("/repo"));
         Operation::new(request,New)
             .parse_project(&filesystem, &Toml)?
-            .generate_unique_identity(&IdentifierGeneratorMock)
+            .generate_unique_identity(&UniqueIdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
             .digest(&filesystem, &DigesterMock)?
             .finalize(&filesystem, APP_VERSION)?;

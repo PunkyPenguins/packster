@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     Result,
-    ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, IdentifierGenerator,
+    ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, UniqueIdentifierGenerator,
     domain::{Project, Package, Version}, PACKAGE_EXTENSION, AbsolutePath
 };
 
@@ -36,11 +36,11 @@ pub struct IdentifiedProject {
 }
 
 impl PackOperation<Project> {
-    pub fn generate_unique_identity<I: IdentifierGenerator>(self, identifier_generator: &I) -> PackOperation<IdentifiedProject> {
+    pub fn generate_unique_identity<I: UniqueIdentifierGenerator>(self, identifier_generator: &I) -> PackOperation<IdentifiedProject> {
         Self::with_state(
             self.request,
             IdentifiedProject {
-                identifier: identifier_generator.generate_identifier(self.state.as_identifier()),
+                identifier: identifier_generator.generate_identifier(),
                 project: self.state
             }
         )

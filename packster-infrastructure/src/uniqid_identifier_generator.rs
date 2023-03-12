@@ -1,20 +1,28 @@
-use packster_core::IdentifierGenerator;
-use uniqueid::{IdentifierBuilder, IdentifierType};
+use packster_core::UniqueIdentifierGenerator;
+use unique_id::Generator;
+use unique_id::string::StringGenerator;
 
-pub struct UniqidIdentifierGenerator;
+
+#[derive(Default)]
+pub struct UniqidIdentifierGenerator(StringGenerator);
 
 //TODO add some logging and integration tests
-impl IdentifierGenerator for UniqidIdentifierGenerator {
-    fn generate_identifier<S: AsRef<str>>(&self, name: S) -> String {
-        let mut builder = IdentifierBuilder::default();
+impl UniqueIdentifierGenerator for UniqidIdentifierGenerator {
+    fn generate_identifier(&self) -> String {
+        self.0.next_id()
+    }
+}
 
-        builder.name(name.as_ref());
-        builder.add(IdentifierType::CPU);
-        builder.add(IdentifierType::RAM);
-        builder.add(IdentifierType::DISK);
 
-        let identifier = builder.build();
+#[cfg(test)]
+mod test {
+    use super::*;
 
-        identifier.to_string(true)
+    #[test]
+    fn test_is_really_unique() {
+        assert_ne!(
+            UniqidIdentifierGenerator::default().generate_identifier(),
+            UniqidIdentifierGenerator::default().generate_identifier()
+        );
     }
 }
