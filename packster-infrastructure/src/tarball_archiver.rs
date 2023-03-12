@@ -1,7 +1,7 @@
 use std::{io::empty, path::Path};
 use flate2::{write::GzEncoder, Compression};
 use tar::{Header, Builder, EntryType};
-use packster_core::{FileSystem, Archiver, AbsolutePath};
+use packster_core::{FileSystem, Archiver, Absolute};
 use crate::{Result, Error};
 
 #[derive(Default)]
@@ -9,7 +9,7 @@ pub struct TarballArchiver;
 
 //TODO add some logging and integration tests
 impl Archiver for TarballArchiver {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()> {
+    fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
         let writer = filesystem.open_write(archive_path)?;
         let encoder = GzEncoder::new(writer, Compression::default());
         let mut tar_builder = Builder::new(encoder);
@@ -19,7 +19,7 @@ impl Archiver for TarballArchiver {
             if found_entry.as_path() == project_path.as_ref() {
                 continue;
             }
-            let found_relative_path = found_entry.as_absolute_path().try_to_relative(project_path)?;
+            let found_relative_path = found_entry.as_absolute_path().try_to_relative(&project_path)?;
 
             let mut header = Header::new_gnu();
 

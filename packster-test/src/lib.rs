@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use std::io::Read;
+    use std::{io::Read, path::PathBuf};
     use indoc::indoc;
 
     use packster_core::{
@@ -10,7 +10,7 @@ mod test {
         UniqueIdentifierGenerator,
         Result,
         operation::{PackRequest, Operation, New},
-        AbsolutePath
+        Absolute
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
@@ -52,7 +52,9 @@ mod test {
         const APP_VERSION : &str = "0.1.4";
 
         let filesystem_as_archiver = InMemoryFileSystem::default();
-        let request = PackRequest::new(AbsolutePath::assume_absolute("/project"), AbsolutePath::assume_absolute("/repo"));
+        let project_workspace = Absolute::assume_absolute(PathBuf::from("/project"));
+        let output_directory = Absolute::assume_absolute(PathBuf::from("/repo"));
+        let request = PackRequest::new(project_workspace, output_directory);
         Operation::new(request,New)
             .parse_project(&filesystem, &Toml)?
             .generate_unique_identity(&UniqueIdentifierGeneratorMock)

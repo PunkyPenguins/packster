@@ -1,14 +1,16 @@
+use std::path::PathBuf;
+
 use clap::Args;
-use packster_core::{operation::PackRequest, AbsolutePath};
+use packster_core::{operation::PackRequest, Absolute};
 use crate::parse::try_from_current_dir;
 
 #[derive(Args)]
 pub struct PackCommand {
     #[arg(short='p', long, value_parser=try_from_current_dir)]
-    pub project_workspace: AbsolutePath,
+    pub project_workspace: Absolute<PathBuf>,
 
     #[arg(short='o', long, value_parser=try_from_current_dir)]
-    pub package_output_directory: AbsolutePath
+    pub package_output_directory: Absolute<PathBuf>
 }
 
 impl From<PackCommand> for PackRequest {

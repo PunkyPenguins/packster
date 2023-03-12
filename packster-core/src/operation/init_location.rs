@@ -1,17 +1,19 @@
-use crate::{Result, AbsolutePath, FileSystem, Error, domain::DeployLocation, Parser, Serializer, LOCKFILE_NAME};
+use std::path::{PathBuf, Path};
+
+use crate::{Result, Absolute, FileSystem, Error, domain::DeployLocation, Parser, Serializer, LOCKFILE_NAME};
 use super::{Operation, New};
 
 pub struct InitLocationRequest {
-    location_directory: AbsolutePath
+    location_directory: Absolute<PathBuf>
 }
 
 impl InitLocationRequest {
-    pub fn new(location_directory: AbsolutePath) -> Self {
+    pub fn new(location_directory: Absolute<PathBuf>) -> Self {
         InitLocationRequest { location_directory }
     }
 
-    pub fn as_location_directory(&self) -> &AbsolutePath {
-        &self.location_directory
+    pub fn as_location_directory(&self) -> Absolute<&Path> {
+        self.location_directory.as_absolute_path()
     }
 }
 

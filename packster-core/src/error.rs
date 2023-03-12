@@ -1,6 +1,6 @@
 use std::{fmt,error, path::PathBuf};
 
-use crate::AbsolutePath;
+use crate::Absolute;
 
 #[derive(Debug)]
 pub enum Error {
@@ -9,7 +9,7 @@ pub enum Error {
     ManifesPathIsADirectory(PathBuf),
     ManifestPathDoesNotExist(PathBuf),
     MissingMandatoryField { entity_name: &'static str, field_name: &'static str },
-    BaseNotInPath { base: AbsolutePath, path: AbsolutePath },
+    BaseNotInPath { base: Absolute<PathBuf>, path: Absolute<PathBuf> },
     PathIsAbsolute(PathBuf),
     PathIsRelative(PathBuf),
     LocationPathIsNotADirectory(PathBuf),
