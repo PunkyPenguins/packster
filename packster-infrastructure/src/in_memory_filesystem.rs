@@ -12,8 +12,8 @@ use packster_core::{
     ReadOnlyFileSystem,
     DirEntry,
     Archiver,
-    NormalizedPath,
-    AbsolutePath
+    NormalizedPathBuf,
+    Absolute
 };
 use crate::{Result, Error};
 
@@ -25,7 +25,7 @@ pub enum Node {
 }
 
 #[derive(Default, Debug)]
-pub struct InMemoryFileSystem(RwLock<BTreeMap<NormalizedPath, Node>>);
+pub struct InMemoryFileSystem(RwLock<BTreeMap<NormalizedPathBuf, Node>>);
 
 impl ReadOnlyFileSystem for InMemoryFileSystem {
     fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -33,12 +33,12 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPath::from(path)).is_some()
+            self.0.read().unwrap().get(&NormalizedPathBuf::from(path)).is_some()
         }
     }
 
     fn is_file<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.0.read().unwrap().get(&NormalizedPath::from(path.as_ref())).filter(|node| matches!(node, Node::File(_))).is_some()
+        self.0.read().unwrap().get(&NormalizedPathBuf::from(path.as_ref())).filter(|node| matches!(node, Node::File(_))).is_some()
     }
 
     fn is_directory<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -46,7 +46,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPath::from(path)).filter(|node| matches!(node, Node::Directory)).is_some()
+            self.0.read().unwrap().get(&NormalizedPathBuf::from(path)).filter(|node| matches!(node, Node::Directory)).is_some()
         }
     }
 
@@ -55,7 +55,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if ! self.is_file(path.as_ref()) { panic!("read_to_string! Path is not a file ! {:?}", path.as_ref()); }
 
         self.0.read().unwrap()
-            .get(&NormalizedPath::from(path.as_ref()))
+            .get(&NormalizedPathBuf::from(path.as_ref()))
             .map(|node| match node {
                 Node::File(content) => Ok(String::from_utf8(content.to_vec()).unwrap()),
                 _ => { panic!("Path is not a file {:?}", path.as_ref()); }
@@ -67,7 +67,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if ! self.is_file(path.as_ref()) { panic!("open_read: Path is not a file ! {:?}", path.as_ref()); }
 
         self.0.read().unwrap()
-            .get(&NormalizedPath::from(path.as_ref()))
+            .get(&NormalizedPathBuf::from(path.as_ref()))
             .map(|node| match node {
                 Node::File(content) => Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read + Send + Sync>),
                 _ => { panic!("Path is not a file {:?}", path.as_ref()); }
@@ -75,7 +75,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
     }
 
     fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
-        let normalized_target_path = NormalizedPath::from(target_path);
+        let normalized_target_path = NormalizedPathBuf::from(target_path);
         let buf : Vec<_> = self.0.read()
             .unwrap()
             .iter()
@@ -84,7 +84,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
             ).map(|(node_path, _)|
                 self.file_size(node_path)
                     .map(|size|
-                        DirEntry::new(AbsolutePath::assume_absolute(node_path), size)
+                        DirEntry::new(Absolute::assume_absolute(node_path.clone()), size)
                     )
             ).collect();
 
@@ -109,7 +109,7 @@ impl FileSystem for InMemoryFileSystem {
             if ! self.is_directory(parent_path) { panic!("create: Parent is not a directory ! {parent_path:?}"); }
         }
 
-        self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::File(Vec::new()));
+        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::File(Vec::new()));
         Ok(())
     }
 
@@ -119,7 +119,7 @@ impl FileSystem for InMemoryFileSystem {
             if ! self.is_directory(parent_path) { panic!("create_dir: Parent is not a directory ! {parent_path:?}"); }
         }
 
-        self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::Directory);
+        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::Directory);
         Ok(())
     }
 
@@ -128,14 +128,14 @@ impl FileSystem for InMemoryFileSystem {
             if ! self.is_directory(parent_path) { panic!("write_all: Parent is not a directory ! {parent_path:?}"); }
         }
 
-        self.0.write().unwrap().insert(NormalizedPath::from(path.as_ref()), Node::File(buf.as_ref().to_vec()));
+        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::File(buf.as_ref().to_vec()));
         Ok(())
     }
 
     fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()> {
         if ! self.exists(source.as_ref()) { panic!("rename: Path not found {:?}", source.as_ref()); }
-        let source_path = NormalizedPath::from(source.as_ref());
-        let destination_path = NormalizedPath::from(destination.as_ref());
+        let source_path = NormalizedPathBuf::from(source.as_ref());
+        let destination_path = NormalizedPathBuf::from(destination.as_ref());
         let node = { self.0.write().unwrap().remove(&source_path).unwrap() };
 
         self.0.write().unwrap().insert(destination_path, node);
@@ -150,7 +150,7 @@ impl FileSystem for InMemoryFileSystem {
         let len = buf.as_ref().len();
         self.0.write()
             .unwrap()
-            .entry(NormalizedPath::from(path.as_ref()))
+            .entry(NormalizedPathBuf::from(path.as_ref()))
             .and_modify(|node|
                 if let Node::File(content) = node {
                     content.extend(buf.as_ref())
@@ -193,12 +193,12 @@ impl <'a>Write for InMemoryFile<'a> {
 }
 
 impl Archiver for InMemoryFileSystem {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()> {
+    fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
         filesystem.create(archive_path.as_ref())?;
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
             let found_entry = found_entry_result?;
-            let relative_path = found_entry.as_absolute_path().try_to_relative(project_path)?;
+            let relative_path = found_entry.as_absolute_path().try_to_relative(&project_path)?;
 
             if filesystem.is_file(found_entry.as_path()) {
                 let mut reader = filesystem.open_read(found_entry.as_path())?;

@@ -10,7 +10,7 @@ pub use error::Error;
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 mod path;
-pub use path::{ AbsolutePath, RelativePath, NormalizedPath };
+pub use path::{ Absolute, RelativePath, NormalizedPathBuf };
 
 mod domain;
 pub use domain::{Identifier, Project};

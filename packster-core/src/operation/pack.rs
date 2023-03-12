@@ -3,18 +3,18 @@ use std::path::PathBuf;
 use crate::{
     Result,
     ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, UniqueIdentifierGenerator,
-    domain::{Project, Package, Version}, PACKAGE_EXTENSION, AbsolutePath
+    domain::{Project, Package, Version}, PACKAGE_EXTENSION, Absolute
 };
 
 use super::{Operation, New};
 
 pub struct PackRequest {
-    project_workspace: AbsolutePath,
-    package_output_directory: AbsolutePath,
+    project_workspace: Absolute<PathBuf>,
+    package_output_directory: Absolute<PathBuf>,
 }
 
 impl PackRequest {
-    pub fn new(project_workspace: AbsolutePath, package_output_directory: AbsolutePath) -> Self {
+    pub fn new(project_workspace: Absolute<PathBuf>, package_output_directory: Absolute<PathBuf>) -> Self {
         PackRequest { project_workspace, package_output_directory }
     }
 }
@@ -49,20 +49,19 @@ impl PackOperation<Project> {
 
 pub struct ArchivedProject {
     pub project: Project,
-    pub archive_path: PathBuf
+    pub archive_path: Absolute<PathBuf>
 }
 
 impl PackOperation<IdentifiedProject> {
     pub fn archive<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<PackOperation<ArchivedProject>> {
         let archive_path = self.request.package_output_directory
-            .as_ref()
             .join(self.state.identifier)
             .with_extension(PACKAGE_EXTENSION);
 
         archiver.archive(
             filesystem,
-            &self.request.project_workspace,
-            &archive_path
+            self.request.project_workspace.as_absolute_path(),
+            archive_path.as_absolute_path()
         )?;
 
         Ok(

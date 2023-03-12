@@ -1,17 +1,17 @@
-use std::{path::{PathBuf, Path, Component}};
+use std::{path::{PathBuf, Path, Component}, ffi::OsStr};
 
 use serde::{Serialize, Deserialize};
 
 use crate::{Result, Error, PathExt};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
-pub struct NormalizedPath(PathBuf);
+pub struct NormalizedPathBuf(PathBuf);
 
-impl From<&Path> for NormalizedPath {
-    fn from(path: &Path) -> Self { NormalizedPath(normalize_path(path)) }
+impl From<&Path> for NormalizedPathBuf {
+    fn from(path: &Path) -> Self { NormalizedPathBuf(normalize_path(path)) }
 }
 
-impl AsRef<Path> for NormalizedPath {
+impl AsRef<Path> for NormalizedPathBuf {
     fn as_ref(&self) -> &Path { &self.0 }
 }
 
@@ -38,36 +38,56 @@ pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf { //TODO MORE UT
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug, Deserialize, Serialize)]
-pub struct AbsolutePath(PathBuf);
+pub struct Absolute<T: AsRef<Path>>(T);
 
-impl AbsolutePath {
-    pub fn assume_absolute<P: AsRef<Path>>(path: P) -> Self {
-        AbsolutePath(path.as_ref().to_path_buf())
+impl <T: AsRef<Path>>Absolute<T> {
+    pub fn assume_absolute(path: T) -> Self {
+        Absolute(path)
     }
 
-    pub fn try_to_relative(&self, base: &AbsolutePath) -> Result<RelativePath> {
+    pub fn try_to_relative<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Result<RelativePath> {
         Ok(
             RelativePath::assume_relative(
-                self.0.strip_prefix(base)
-                    .map_err(|_| Error::BaseNotInPath { base: base.clone(), path: self.clone() })?
+                self.0.as_ref().strip_prefix(base.as_ref())
+                    .map_err(|_| Error::BaseNotInPath { base: base.to_absolute_path(), path: self.to_absolute_path() })?
             )
         )
     }
+
+    pub fn as_absolute_path(&self) -> Absolute<&Path> {
+        Absolute(self.0.as_ref())
+    }
+
+    pub fn to_absolute_path(&self) -> Absolute<PathBuf> {
+        Absolute(self.0.as_ref().to_path_buf())
+    }
+
+    pub fn join<P: AsRef<Path>>(&self, path: P) -> Absolute<PathBuf> {
+        Absolute(self.0.as_ref().join(path))
+    }
+
+    pub fn with_extension<S: AsRef<OsStr>>(&self, extension: S) -> Absolute<PathBuf> {
+        Absolute(self.0.as_ref().with_extension(extension))
+    }
+
+    pub fn with_file_name<S: AsRef<OsStr>>(&self, filename: S) -> Absolute<PathBuf> {
+        Absolute(self.0.as_ref().with_file_name(filename))
+    }
 }
 
-impl TryFrom<&Path> for AbsolutePath {
+impl <'a>TryFrom<&'a Path> for Absolute<&'a Path> {
     type Error = Error;
-    fn try_from(path: &Path) -> Result<Self> {
+    fn try_from(path: &'a Path) -> Result<Self> {
         if path.is_relative() {
             Err(Error::PathIsRelative(path.to_path_buf()))
         } else {
-            Ok(AbsolutePath::assume_absolute(path))
+            Ok(Absolute::assume_absolute(path))
         }
      }
 }
 
-impl AsRef<Path> for AbsolutePath {
-    fn as_ref(&self) -> &Path { &self.0 }
+impl <T: AsRef<Path>>AsRef<Path> for Absolute<T> {
+    fn as_ref(&self) -> &Path { self.0.as_ref() }
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -102,8 +122,8 @@ impl PathExt for &Path {
             .any(|ancestor| { ancestor.to_normalized_path() == self.to_normalized_path() })
     }
 
-    fn to_normalized_path(&self) -> NormalizedPath {
-        NormalizedPath::from(*self)
+    fn to_normalized_path(&self) -> NormalizedPathBuf {
+        NormalizedPathBuf::from(*self)
     }
 }
 

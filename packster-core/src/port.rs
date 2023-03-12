@@ -1,23 +1,24 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
-use crate::{Result, AbsolutePath, NormalizedPath};
+use crate::{Result, Absolute, NormalizedPathBuf};
 
 pub trait PathExt {
     fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
-    fn to_normalized_path(&self) -> NormalizedPath;
+    fn to_normalized_path(&self) -> NormalizedPathBuf;
+    // fn assume_absolute(&self) -> AbsolutePath<&Path>;
 }
 
 #[derive(Debug)]
 pub struct DirEntry {
-    path: AbsolutePath,
+    path: Absolute<NormalizedPathBuf>,
     size: u64
 }
 
 impl DirEntry {
-    pub fn new(path: AbsolutePath, size: u64) -> Self { DirEntry { path, size } }
+    pub fn new(path: Absolute<NormalizedPathBuf>, size: u64) -> Self { DirEntry { path, size } }
     pub fn as_path(&self) -> &Path { self.path.as_ref() }
-    pub fn as_absolute_path(&self) -> &AbsolutePath { &self.path }
+    pub fn as_absolute_path(&self) -> Absolute<&Path> { self.path.as_absolute_path() }
     pub fn size(&self) -> u64 { self.size }
 }
 
@@ -41,7 +42,7 @@ pub trait FileSystem : ReadOnlyFileSystem {
 }
 
 pub trait Archiver : Sync + Send {
-    fn archive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, project_path: &AbsolutePath, archive_path: P) -> Result<()>;
+    fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()>;
     // fn unarchive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> Result<()>;
 }
 
