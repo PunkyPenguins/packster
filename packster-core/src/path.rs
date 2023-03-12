@@ -45,7 +45,7 @@ impl <T: AsRef<Path>>Absolute<T> {
         Absolute(path)
     }
 
-    pub fn try_to_relative<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Result<RelativePath> {
+    pub fn try_to_relative<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Result<RelativePath<&Path>> {
         Ok(
             RelativePath::assume_relative(
                 self.0.as_ref().strip_prefix(base.as_ref())
@@ -91,11 +91,11 @@ impl <T: AsRef<Path>>AsRef<Path> for Absolute<T> {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct RelativePath(PathBuf);
+pub struct RelativePath<T: AsRef<Path>>(T);
 
-impl TryFrom<&Path> for RelativePath {
+impl <'a>TryFrom<&'a Path> for RelativePath<&'a Path> {
     type Error = Error;
-    fn try_from(path: &Path) -> Result<Self> {
+    fn try_from(path: &'a Path) -> Result<Self> {
         if path.is_absolute() {
             Err(Error::PathIsAbsolute(path.to_path_buf()))
         } else {
@@ -104,13 +104,13 @@ impl TryFrom<&Path> for RelativePath {
     }
 }
 
-impl <'a>AsRef<Path> for &'a RelativePath {
-    fn as_ref(&self) -> &Path { &self.0 }
+impl <T: AsRef<Path>>AsRef<Path> for RelativePath<T> {
+    fn as_ref(&self) -> &Path { self.0.as_ref() }
 }
 
-impl RelativePath {
-    pub fn assume_relative<P: AsRef<Path>>(path: P) -> Self {
-       RelativePath(path.as_ref().to_path_buf())
+impl <T: AsRef<Path>>RelativePath<T> {
+    pub fn assume_relative(path: T) -> Self {
+       RelativePath(path)
     }
 }
 
