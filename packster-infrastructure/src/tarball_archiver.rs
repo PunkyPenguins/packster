@@ -19,7 +19,8 @@ impl Archiver for TarballArchiver {
             if found_entry.as_path() == project_path.as_ref() {
                 continue;
             }
-            let found_relative_path = found_entry.as_absolute_path().try_to_relative(&project_path)?;
+            let found_absolute_path = found_entry.as_absolute_path();
+            let found_relative_path = found_absolute_path.try_to_relative(&project_path)?;
 
             let mut header = Header::new_gnu();
 

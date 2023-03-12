@@ -198,7 +198,8 @@ impl Archiver for InMemoryFileSystem {
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
             let found_entry = found_entry_result?;
-            let relative_path = found_entry.as_absolute_path().try_to_relative(&project_path)?;
+            let absolute_path = found_entry.as_absolute_path();
+            let relative_path = absolute_path.try_to_relative(&project_path)?;
 
             if filesystem.is_file(found_entry.as_path()) {
                 let mut reader = filesystem.open_read(found_entry.as_path())?;
