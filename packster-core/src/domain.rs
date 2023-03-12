@@ -1,12 +1,10 @@
 use std::fmt;
 
-// use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use crate::PACKAGE_EXTENSION;
 
 #[derive(Deserialize)]
-// #[serde(try_from = "String")]
 pub struct Identifier(String);
 
 impl fmt::Display for Identifier {
@@ -34,9 +32,6 @@ impl fmt::Display for Version {
     }
 }
 
-//deserialize_with ?
-
-//https://serde.rs/field-attrs.html#deserialize_with
 #[derive(Deserialize)]
 pub struct Project {
     identifier: Identifier,

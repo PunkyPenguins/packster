@@ -1,7 +1,5 @@
 #![cfg_attr(all(not(debug_assertions), not(test)), deny(warnings))]
 #![forbid(unsafe_code)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![warn(clippy::all)]
 
 pub const PACKAGE_EXTENSION : &str = "packster";

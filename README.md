@@ -8,6 +8,12 @@ This project aim to provide a System-level Package Manager that deal with depend
 
 The idea is to use concepts from Language Package Managers ( like cargo ) to handle properly the diamond dependency problem : basically allow multiple versions to be deployed.
 
+## Setup
+
+With rustup: https://www.rust-lang.org/tools/install
+
+We stick to the `stable` distribution for now ( `nightly` conflicts with `ntapi` crate )
+
 ## How To ...
 
 ### Execute tests
@@ -15,6 +21,20 @@ The idea is to use concepts from Language Package Managers ( like cargo ) to han
 ```sh
 cargo test
 ```
+
+### Execute linter
+
+```sh
+cargo clippy
+```
+
+### Build a binary
+
+```sh
+cargo build --release
+```
+
+You'd find your binary in `target\release` ( `packster-cli` or `packster-cli.exe` depending on your building platform )
 
 ### Get CLI help
 
