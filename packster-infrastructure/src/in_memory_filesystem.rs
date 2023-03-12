@@ -80,8 +80,7 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
             .unwrap()
             .iter()
             .filter(move |(node_path, _)|
-                &normalized_target_path != *node_path
-                && normalized_target_path.as_ref().is_ancestor_of(*node_path)
+                normalized_target_path.as_ref().is_ancestor_of(*node_path)
             ).map(|(node_path, _)|
                 self.file_size(node_path)
                     .map(|size|

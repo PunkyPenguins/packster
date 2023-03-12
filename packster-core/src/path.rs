@@ -2,7 +2,7 @@ use std::{path::{PathBuf, Path, Component}};
 
 use serde::{Serialize, Deserialize};
 
-use crate::{Result, Error};
+use crate::{Result, Error, PathExt};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct NormalizedPath(PathBuf);
@@ -94,13 +94,9 @@ impl RelativePath {
     }
 }
 
-pub trait PathExt {
-    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
-    fn to_normalized_path(&self) -> NormalizedPath;
-}
-
 impl PathExt for &Path {
-    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool { //TODO UT
+    fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool {
+        if child_path.as_ref() == *self { return false; }
         child_path.as_ref()
             .ancestors()
             .any(|ancestor| { ancestor.to_normalized_path() == self.to_normalized_path() })
@@ -111,10 +107,74 @@ impl PathExt for &Path {
     }
 }
 
-#[test]
-pub fn test_normalize_path_handle_different_separators(){
-    let path = PathBuf::from("C:\\this/is\\a/test/of/inconstistant\\separators");
-    assert_eq!(PathBuf::from("C:\\this\\is\\a\\test\\of\\inconstistant\\separators"), normalize_path(path))
-}
+#[cfg(test)]
+mod test {
+    use super::*;
 
-//trait AsPath ?
+    #[test]
+    pub fn test_normalize_path_handle_different_separators(){
+        assert_eq!(
+            normalize_path("C:\\this/is\\a/test/of/inconstistant\\separators"),
+            PathBuf::from("C:\\this\\is\\a\\test\\of\\inconstistant\\separators")
+        );
+    }
+
+    #[test]
+    pub fn test_is_ancestor_of_same_path () {
+        assert!(! Path::new("same/path").is_ancestor_of("same/path"));
+        assert!(! Path::new("same\\path").is_ancestor_of("same/path"));
+
+        assert!(! Path::new("/same/path").is_ancestor_of("/same/path"));
+        assert!(! Path::new("\\same\\path").is_ancestor_of("/same/path"));
+
+        assert!(! Path::new("C:\\same\\path").is_ancestor_of("C:\\same\\path"));
+        assert!(! Path::new("C:\\same\\path").is_ancestor_of("C:/same/path"));
+    }
+
+    #[test]
+    pub fn test_is_ancestor_of_relative_path() {
+        assert!(Path::new("is/a").is_ancestor_of("is/a/relative/path"));
+        assert!(! Path::new("be/a").is_ancestor_of("is/a/relative/path"));
+
+        assert!(Path::new("is\\a").is_ancestor_of("is\\a/relative\\path"));
+        assert!(! Path::new("be\\a").is_ancestor_of("is/a\\relative\\path"));
+    }
+
+    #[test]
+    pub fn test_is_ancestor_of_absolute_path() {
+        assert!(Path::new("/is/an").is_ancestor_of("/is/an/absolute/path"));
+        assert!(! Path::new("/be/an").is_ancestor_of("/is/an/absolute/path"));
+    }
+
+    #[test]
+    fn test_normalize_path_solve_one_and_two_dots () {
+        assert_eq!(
+            normalize_path("relative/./eaten/../path/depth/./.."),
+            PathBuf::from("relative/path")
+        );
+    }
+
+    #[test]
+    fn test_normalize_path_solve_only_defined_levels () {
+        assert_eq!(
+            normalize_path("../../relative/../.."),
+            PathBuf::from("../../..")
+        );
+    }
+
+    #[test]
+    fn test_normalize_path_preserve_root () {
+        assert_eq!(
+            normalize_path("/relative/./eaten/../path/depth/./.."),
+            PathBuf::from("/relative/path")
+        );
+    }
+
+    #[test]
+    fn test_normalize_preserve_prefix () {
+        assert_eq!(
+            normalize_path("C:\\relative\\.\\eaten\\..\\path\\depth\\.\\.."),
+            PathBuf::from("C:\\relative\\path")
+        );
+    }
+}
