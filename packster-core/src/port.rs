@@ -50,8 +50,8 @@ pub trait Digester : Sync + Send {
     // fn verify_checksum<R: Read>(&self, reader: R, checksum: &[u8]) -> bool;
 }
 
-pub trait IdentifierGenerator : Sync + Send {
-    fn generate_identifier<S: AsRef<str>>(&self, name: S) -> String;
+pub trait UniqueIdentifierGenerator : Sync + Send {
+    fn generate_identifier(&self) -> String;
 }
 
 pub trait Parser {

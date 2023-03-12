@@ -41,7 +41,7 @@ impl CommandLine {
             match command {
                 Command::Pack(pack_command) => Operation::new(pack_command.into(), New)
                     .parse_project(&StdFileSystem, &Toml)?
-                    .generate_unique_identity(&UniqidIdentifierGenerator)
+                    .generate_unique_identity(&UniqidIdentifierGenerator::default())
                     .archive(&StdFileSystem, &TarballArchiver)?
                     .digest(&StdFileSystem, &Sha2Digester::Sha256)?
                     .finalize(&StdFileSystem, CRATE_VERSION)
