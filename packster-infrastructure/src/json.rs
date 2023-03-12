@@ -1,4 +1,4 @@
-use packster_core::{Result, Parser, Serializer};
+use packster_core::{Result, port::{Parser, Serializer}};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{ from_str, to_string } ;
 

@@ -1,5 +1,4 @@
 use std::{
-    fmt,
     collections::BTreeMap,
     sync::RwLock,
     path::{Path, PathBuf},
@@ -7,13 +6,14 @@ use std::{
 };
 
 use packster_core::{
-    PathExt,
-    FileSystem,
-    ReadOnlyFileSystem,
-    DirEntry,
-    Archiver,
-    NormalizedPathBuf,
-    Absolute
+    port::{
+        PathExt,
+        FileSystem,
+        ReadOnlyFileSystem,
+        DirEntry,
+        Archiver
+    },
+    path::{ NormalizedPathBuf, Absolute }
 };
 use crate::{Result, Error};
 
@@ -24,6 +24,12 @@ pub enum Node {
     Directory
 }
 
+/**
+ * InMemoryFileSystem is not prod ready for the following reasons :
+ * - it doesn't handle errors properly ( a lot of unwrap )
+ * - it assumes paths are absolute
+ * - it propably doesn't have all the wanted behaviours for a virtual in-memory file system
+ */
 #[derive(Default, Debug)]
 pub struct InMemoryFileSystem(RwLock<BTreeMap<NormalizedPathBuf, Node>>);
 
@@ -211,12 +217,6 @@ impl Archiver for InMemoryFileSystem {
         }
 
         Ok(())
-    }
-}
-
-impl fmt::Display for InMemoryFileSystem {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "mock")
     }
 }
 

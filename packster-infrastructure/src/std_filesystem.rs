@@ -5,7 +5,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use packster_core::{ReadOnlyFileSystem, FileSystem, DirEntry, Absolute, PathExt};
+use packster_core::{port::{ReadOnlyFileSystem, FileSystem, DirEntry, PathExt }, path::Absolute};
 use crate::{Result, Error};
 
 pub struct StdFileSystem;
@@ -37,14 +37,23 @@ impl ReadOnlyFileSystem for StdFileSystem {
             WalkDir::new(target_path)
                 .into_iter()
                 .map(|entry|
-                    entry.and_then(|entry|
-                        entry.metadata().map(|metadata|
-                            DirEntry::new(
-                                Absolute::assume_absolute(entry.path().to_normalized_path()),
-                                metadata.len()
+                    entry
+                    .and_then(|entry|
+                        entry.metadata()
+                            .map(|metadata|
+                                (metadata.len(), entry.path().to_normalized_path())
                             )
-                        )
-                    ).map_err(|e| Error::from(e).into())
+                    )
+                    .map_err(|e| Error::from(e).into())
+                    .and_then(|(len, normalized_path)|
+                        Absolute::try_absolute(normalized_path)
+                            .map(|absolute_path|
+                                 DirEntry::new(
+                                    absolute_path,
+                                    len
+                                )
+                            )
+                    )
                 )
         )
     }

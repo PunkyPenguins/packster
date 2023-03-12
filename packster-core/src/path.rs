@@ -2,7 +2,7 @@ use std::{path::{PathBuf, Path, Component}, ffi::OsStr};
 
 use serde::{Serialize, Deserialize};
 
-use crate::{Result, Error, PathExt};
+use crate::{Result, Error, port::PathExt};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct NormalizedPathBuf(PathBuf);
@@ -45,9 +45,17 @@ impl <T: AsRef<Path>>Absolute<T> {
         Absolute(path)
     }
 
-    pub fn try_to_relative<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Result<RelativePath<&Path>> {
+    pub fn try_absolute(path: T) -> Result<Self> {
+        if path.as_ref().is_relative() {
+            Err(Error::PathIsRelative(path.as_ref().to_path_buf()))
+        } else {
+            Ok(Absolute(path))
+        }
+    }
+
+    pub fn try_to_relative<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Result<Relative<&Path>> {
         Ok(
-            RelativePath::assume_relative(
+            Relative(
                 self.0.as_ref().strip_prefix(base.as_ref())
                     .map_err(|_| Error::BaseNotInPath { base: base.to_absolute_path(), path: self.to_absolute_path() })?
             )
@@ -60,6 +68,10 @@ impl <T: AsRef<Path>>Absolute<T> {
 
     pub fn to_absolute_path(&self) -> Absolute<PathBuf> {
         Absolute(self.0.as_ref().to_path_buf())
+    }
+
+    pub fn to_normalized_absolute_path(&self) -> Absolute<NormalizedPathBuf> {
+        Absolute(self.0.as_ref().to_normalized_path())
     }
 
     pub fn join<P: AsRef<Path>>(&self, path: P) -> Absolute<PathBuf> {
@@ -75,42 +87,32 @@ impl <T: AsRef<Path>>Absolute<T> {
     }
 }
 
-impl <'a>TryFrom<&'a Path> for Absolute<&'a Path> {
-    type Error = Error;
-    fn try_from(path: &'a Path) -> Result<Self> {
-        if path.is_relative() {
-            Err(Error::PathIsRelative(path.to_path_buf()))
-        } else {
-            Ok(Absolute::assume_absolute(path))
-        }
-     }
-}
-
 impl <T: AsRef<Path>>AsRef<Path> for Absolute<T> {
     fn as_ref(&self) -> &Path { self.0.as_ref() }
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct RelativePath<T: AsRef<Path>>(T);
+pub struct Relative<T: AsRef<Path>>(T);
 
-impl <'a>TryFrom<&'a Path> for RelativePath<&'a Path> {
-    type Error = Error;
-    fn try_from(path: &'a Path) -> Result<Self> {
-        if path.is_absolute() {
-            Err(Error::PathIsAbsolute(path.to_path_buf()))
-        } else {
-            Ok(RelativePath::assume_relative(path))
-        }
-    }
-}
-
-impl <T: AsRef<Path>>AsRef<Path> for RelativePath<T> {
+impl <T: AsRef<Path>>AsRef<Path> for Relative<T> {
     fn as_ref(&self) -> &Path { self.0.as_ref() }
 }
 
-impl <T: AsRef<Path>>RelativePath<T> {
+impl <T: AsRef<Path>>Relative<T> {
     pub fn assume_relative(path: T) -> Self {
-       RelativePath(path)
+       Relative(path)
+    }
+
+    pub fn try_relative(path: T) -> Result<Self> {
+        if path.as_ref().is_relative() {
+            Ok(Relative(path))
+        } else {
+            Err(Error::PathIsRelative(path.as_ref().to_path_buf()))
+        }
+    }
+
+    pub fn to_absolute<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Absolute<PathBuf> {
+        base.join(self.0.as_ref())
     }
 }
 

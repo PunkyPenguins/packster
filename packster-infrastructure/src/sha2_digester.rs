@@ -1,6 +1,6 @@
 use std::{io::{self, Read}};
 use sha2::{Sha256, Digest};
-use packster_core::Digester;
+use packster_core::port::Digester;
 use crate::{ Result, Error };
 
 pub enum Sha2Digester {

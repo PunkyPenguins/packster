@@ -1,6 +1,6 @@
 use std::{fmt,error, path::PathBuf};
 
-use crate::Absolute;
+use crate::path::Absolute;
 
 #[derive(Debug)]
 pub enum Error {
