@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Args;
-use packster_core::{operation::InitLocationRequest, Absolute};
+use packster_core::{operation::InitLocationRequest, path::Absolute};
 use crate::parse::try_from_current_dir;
 
 #[derive(Args)]

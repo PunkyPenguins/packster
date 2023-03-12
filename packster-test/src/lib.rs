@@ -4,13 +4,15 @@ mod test {
     use indoc::indoc;
 
     use packster_core::{
-        Digester,
-        ReadOnlyFileSystem,
-        FileSystem,
-        UniqueIdentifierGenerator,
+        port::{
+            Digester,
+            ReadOnlyFileSystem,
+            FileSystem,
+            UniqueIdentifierGenerator,
+        },
         Result,
         operation::{PackRequest, Operation, New},
-        Absolute
+        path::Absolute
     };
     use packster_infrastructure::{
         InMemoryFileSystem,

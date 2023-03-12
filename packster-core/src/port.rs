@@ -1,12 +1,11 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
-use crate::{Result, Absolute, NormalizedPathBuf};
+use crate::{Result, path::{Absolute, NormalizedPathBuf}};
 
 pub trait PathExt {
     fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
     fn to_normalized_path(&self) -> NormalizedPathBuf;
-    // fn assume_absolute(&self) -> AbsolutePath<&Path>;
 }
 
 #[derive(Debug)]

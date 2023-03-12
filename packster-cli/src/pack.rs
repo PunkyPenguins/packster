@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Args;
-use packster_core::{operation::PackRequest, Absolute};
+use packster_core::{operation::PackRequest, path::Absolute};
 use crate::parse::try_from_current_dir;
 
 #[derive(Args)]

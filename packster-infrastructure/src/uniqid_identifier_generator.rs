@@ -1,4 +1,4 @@
-use packster_core::UniqueIdentifierGenerator;
+use packster_core::port::UniqueIdentifierGenerator;
 use unique_id::Generator;
 use unique_id::string::StringGenerator;
 
