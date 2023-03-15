@@ -42,7 +42,7 @@ pub trait FileSystem : ReadOnlyFileSystem {
 
 pub trait Archiver : Sync + Send {
     fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()>;
-    // fn unarchive<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> Result<()>;
+    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: P1, archive_path: P2) -> Result<()>;
 }
 
 pub trait Digester : Sync + Send {

@@ -40,4 +40,8 @@ impl Archiver for TarballArchiver {
 
         Ok(())
     }
+
+    fn extract<F: FileSystem, P: AsRef<Path>>(&self, filesystem: &F, expand_path: P, archive_path: P) -> packster_core::Result<()> {
+        todo!()
+    }
 }
