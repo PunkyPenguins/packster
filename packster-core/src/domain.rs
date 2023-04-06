@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::PACKAGE_EXTENSION;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Identifier(String);
 
 impl fmt::Display for Identifier {
@@ -13,7 +13,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Version(String);
 
 impl Version {
@@ -77,10 +77,28 @@ impl Package {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Deployment {}
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Deployment {
+    checksum: String
+}
+
+impl Deployment {
+    pub fn new( checksum: String) -> Self {
+        Deployment { checksum }
+    }
+}
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DeployLocation {
     deployments: Vec<Deployment>
+}
+
+impl DeployLocation {
+    pub fn as_slice(&self) -> &[Deployment] {
+        &self.deployments
+    }
+
+    pub fn add_deployment(&mut self, deployment: Deployment) {
+        self.deployments.push(deployment);
+    }
 }
