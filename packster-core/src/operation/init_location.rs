@@ -58,8 +58,11 @@ pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(path_bu
 // vérifier que le package est déjà déployé dans la location sinon erreur
 // extraire le package dans la location
 
-pub fn extract_checksum<P: AsRef<Path>>(_: P) -> Result<String> { //TODO Type Checksum
-    todo!()
+pub fn extract_checksum<P: AsRef<Path>>(path: P) -> Result<String> { //TODO Type Checksum
+    let filename = path.as_ref().file_name().unwrap().to_str().unwrap();
+    let parts: Vec<&str> = filename.split('.').collect();
+    let last_part = parts.last().unwrap().to_string();
+    Ok(last_part)
 }
 
 pub struct PackagedNotYetInstalled;
@@ -106,9 +109,6 @@ pub fn install_package_to_location<P: AsRef<Path>, L: AsRef<Path>, F: FileSystem
 mod test {
     use super::*;
 }
-
-
-
 
 // let deploy_location = DeployLocation::default();
 

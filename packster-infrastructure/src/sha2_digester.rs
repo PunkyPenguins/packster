@@ -23,6 +23,7 @@ impl Digester for Sha2Digester {
             }
         }
     }
+
 }
 
 #[cfg(test)]
