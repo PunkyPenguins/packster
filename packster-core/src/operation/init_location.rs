@@ -58,11 +58,19 @@ pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(path_bu
 // vérifier que le package est déjà déployé dans la location sinon erreur
 // extraire le package dans la location
 
+
 pub fn extract_checksum<P: AsRef<Path>>(path: P) -> Result<String> { //TODO Type Checksum
-    let filename = path.as_ref().file_name().unwrap().to_str().unwrap();
-    let parts: Vec<&str> = filename.split('.').collect();
-    let last_part = parts.last().unwrap().to_string();
-    Ok(last_part)
+    let filename = path.as_ref().file_stem();
+
+    match filename {
+        None => panic!("No file stem in path"),
+        Some(filename) => {
+            let filename = filename.to_str().unwrap();
+            let package_id_version_checksum_packster_hash = filename.split("_").collect::<Vec<&str>>();
+            let checksum = package_id_version_checksum_packster_hash.get(2).unwrap();
+            Ok(checksum.to_string())
+        }
+    }
 }
 
 pub struct PackagedNotYetInstalled;

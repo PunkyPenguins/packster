@@ -1,4 +1,5 @@
-use std::fmt;
+use std::{ path::Path, fmt };
+
 
 use serde::{Deserialize, Serialize};
 
@@ -65,7 +66,7 @@ impl Package {
         }
     }
 
-    pub fn file_name(&self) -> String {
+    fn to_file_name(&self) -> String {        
         format!(
             "{}_{}_{}.{}.{}",
             self.identifier,
@@ -73,7 +74,24 @@ impl Package {
             hex::encode(&self.digest),
             hex::encode(self.packster_version.as_bytes()),
             PACKAGE_EXTENSION
-        )
+        )        
+    }
+
+    fn from_path(path: &Path) -> Self {
+        let filename = path.file_stem().unwrap().to_str().unwrap();
+        let mut parts = filename.split('_');
+
+        let identifier = parts.next().unwrap();
+        let version = parts.next().unwrap();
+        let checksum = parts.next().unwrap();
+        let packster_version = parts.next().unwrap();
+
+        Package {
+            identifier: Identifier(identifier.to_owned()),
+            version: Version(version.to_owned()),
+            digest: hex::decode(checksum).unwrap(),
+            packster_version: Version(packster_version.to_owned())
+        }
     }
 }
 
