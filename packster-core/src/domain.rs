@@ -66,6 +66,10 @@ impl Package {
         }
     }
 
+    pub fn to_checksum(&self) -> String {
+        hex::encode(&self.digest)
+    }
+
     pub fn to_file_name(&self) -> String {
         format!(
             "{}_{}_{}.{}.{}",
