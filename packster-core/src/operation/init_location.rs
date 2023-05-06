@@ -42,8 +42,8 @@ impl InitLocationOperation<New> {
     }
 }
 
-pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(_path_buff: P, _filesystem: &F) -> Result<()> {
-    //TODO check if the location is not already present
+pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(_path: P, _filesystem: &F) -> Result<()> {
+    println!("TODO check if the location is not already present");
     Ok(())
 }
 
@@ -57,9 +57,6 @@ pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(_path_b
 
 // vérifier que le package est déjà déployé dans la location sinon erreur
 // extraire le package dans la location
-
-pub struct PackagedNotYetInstalled;
-
 
 
 pub fn install_package_to_location<P: AsRef<Path>, L: AsRef<Path>, F: FileSystem, A: Archiver, S: Serializer>(path_package: P, path_location: L, filesystem: &F, archiver: &A, serializer: &S) -> Result<()> {
@@ -96,12 +93,6 @@ pub fn install_package_to_location<P: AsRef<Path>, L: AsRef<Path>, F: FileSystem
     // deploy_path : C:\\my-location\ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 
     Ok(())
-}
-
-
-#[cfg(test)]
-mod test {
-    use super::*;
 }
 
 // let deploy_location = DeployLocation::default();

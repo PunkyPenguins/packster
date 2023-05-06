@@ -132,8 +132,8 @@ mod test {
     #[test]
     fn test_extract_checksum_from_path() {
         let path = Path::new("C:\\Downloads\\static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad_f61f10025ad.packster");
-        let package = Package::from_path(path);
+        let checksum = Package::from_path(path).to_checksum();
 
-        assert_eq!(package.to_checksum(), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        assert_eq!(checksum, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     }
 }
