@@ -109,7 +109,7 @@ impl PackOperation<DigestedArchivedProject> {
         } = self.state;
 
         let package = Package::new(project, digest, Version::new(packster_version));
-        let final_archive_path = archive_path.with_file_name(package.file_name());
+        let final_archive_path = archive_path.with_file_name(package.to_file_name());
 
         filesystem.rename(archive_path, final_archive_path)?;
         Ok(Self::with_state(self.request, package))

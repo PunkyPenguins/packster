@@ -66,7 +66,7 @@ impl Package {
         }
     }
 
-    fn to_file_name(&self) -> String {        
+    pub fn to_file_name(&self) -> String {
         format!(
             "{}_{}_{}.{}.{}",
             self.identifier,
@@ -74,10 +74,10 @@ impl Package {
             hex::encode(&self.digest),
             hex::encode(self.packster_version.as_bytes()),
             PACKAGE_EXTENSION
-        )        
+        )
     }
 
-    fn from_path(path: &Path) -> Self {
+    pub fn from_path(path: &Path) -> Self {
         let filename = path.file_stem().unwrap().to_str().unwrap();
         let mut parts = filename.split('_');
 

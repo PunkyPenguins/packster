@@ -47,7 +47,7 @@ impl CommandLine {
                     .finalize(&StdFileSystem, CRATE_VERSION)
                     .map(
                         |package|
-                            println!("Package created : {}", package.get_state().file_name())
+                            println!("Package created : {}", package.get_state().to_file_name())
                     )?
                 ,
                 Command::InitLocation(init_location) => Operation::new(init_location.into(), New)
