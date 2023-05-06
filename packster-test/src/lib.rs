@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use std::{io::Read, path::PathBuf};
+    use std::{io::Read, path::{PathBuf, Path}};
     use indoc::indoc;
 
     use packster_core::{
@@ -11,12 +11,13 @@ mod test {
             UniqueIdentifierGenerator,
         },
         Result,
-        operation::{PackRequest, Operation, New},
-        path::Absolute
+        operation::{PackRequest, Operation, New, InitLocationRequest},
+        path::Absolute, LOCKFILE_NAME
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
-        Toml
+        Toml,
+        Json
     };
 
     #[test]
@@ -75,4 +76,23 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn test_init_location_initialization_case() -> Result<()> {
+        let filesystem = InMemoryFileSystem::default();
+        filesystem.create_dir("/my")?;
+
+        let request = InitLocationRequest::new(Absolute::assume_absolute(PathBuf::from("/my/location")));
+        Operation::new(request, New)
+            .initialize_lockfile(&filesystem, &Json)?;
+
+        let expected_lockfile_path = Path::new("/my/location").join(LOCKFILE_NAME);
+        assert!(filesystem.exists(&expected_lockfile_path));
+
+        let expected_lockfile_content = "{\"deployments\":[]}";
+        assert_eq!(filesystem.read_to_string(expected_lockfile_path)?, expected_lockfile_content);
+
+        Ok(())
+    }
+
 }
