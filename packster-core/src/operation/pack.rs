@@ -5,7 +5,7 @@ use crate::{
     port::{ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, UniqueIdentifierGenerator},
     path::Absolute,
     domain::{Project, Package, Version},
-    PACKAGE_EXTENSION,
+    PACKAGE_EXTENSION, PROJECT_MANIFEST_NAME,
 };
 
 use super::{Operation, New};
@@ -23,12 +23,12 @@ impl PackRequest {
 
 pub type PackOperation<S> = Operation<S, PackRequest>;
 
+// TODO make project parsing generic
 impl PackOperation<New> {
     pub fn parse_project<F: ReadOnlyFileSystem, P: Parser>(self, filesystem: &F, parser: &P) -> Result<PackOperation<Project>> {
-        let manifest_path = self.request.project_workspace.as_ref().join("packster.toml");
-
+        let manifest_path = self.request.project_workspace.as_ref().join(PROJECT_MANIFEST_NAME);
         let raw_manifest_string = filesystem.read_to_string(manifest_path)?;
-        Ok(Self::with_state(self.request, parser.parse(raw_manifest_string)?))
+        Self::ok_with_state(self.request, parser.parse(raw_manifest_string)?)
     }
 }
 
@@ -66,14 +66,12 @@ impl PackOperation<IdentifiedProject> {
             archive_path.as_absolute_path()
         )?;
 
-        Ok(
-            Self::with_state(
-                self.request,
-                ArchivedProject {
-                    project: self.state.project,
-                    archive_path
-                }
-            )
+        Self::ok_with_state(
+            self.request,
+            ArchivedProject {
+                project: self.state.project,
+                archive_path
+            }
         )
     }
 }
@@ -86,14 +84,12 @@ pub struct DigestedArchivedProject {
 impl PackOperation<ArchivedProject> {
     pub fn digest<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<PackOperation<DigestedArchivedProject>> {
         let digest = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
-        Ok(
-            Self::with_state(
-                self.request,
-                DigestedArchivedProject {
-                    archived: self.state,
-                    digest
-                }
-            )
+        Self::ok_with_state(
+            self.request,
+            DigestedArchivedProject {
+                archived: self.state,
+                digest
+            }
         )
     }
 }
@@ -112,6 +108,6 @@ impl PackOperation<DigestedArchivedProject> {
         let final_archive_path = archive_path.with_file_name(package.to_file_name());
 
         filesystem.rename(archive_path, final_archive_path)?;
-        Ok(Self::with_state(self.request, package))
+        Self::ok_with_state(self.request, package)
     }
 }
