@@ -14,6 +14,8 @@ pub enum Error {
     PathIsRelative(PathBuf),
     LocationPathIsNotADirectory(PathBuf),
     LocationManifestPathIsNotAFile(PathBuf),
+    PackageChecksumDoNotMatch{package_path: PathBuf, package_id: String, package_checksum: String},
+    PackageAlreadyDeployedInLocation(String)
 }
 
 impl fmt::Display for Error {
@@ -29,7 +31,15 @@ impl fmt::Display for Error {
             PathIsRelative(path) => write!(f, "Path is relative : {}", path.to_string_lossy()),
             BaseNotInPath { base, path } => write!(f, "Base \"{}\" not in path \"{}\"", base.as_ref().to_string_lossy(), path.as_ref().to_string_lossy()),
             LocationPathIsNotADirectory(path) => write!(f, "Location path exists but is not a directory {}", path.to_string_lossy()),
-            LocationManifestPathIsNotAFile(path) => write!(f, "Location manifest path exists but is not a file {}", path.to_string_lossy())
+            LocationManifestPathIsNotAFile(path) => write!(f, "Location manifest path exists but is not a file {}", path.to_string_lossy()),
+            PackageChecksumDoNotMatch{ package_path, package_id, package_checksum } => write!(
+                f,
+                "Package {} checksum {} does not match with file {}",
+                package_checksum,
+                package_id,
+                package_path.to_string_lossy()
+            ),
+            PackageAlreadyDeployedInLocation(package_id) => write!(f,"Package {package_id} already exists in location")
         }
     }
 }

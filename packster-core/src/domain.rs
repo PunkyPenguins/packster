@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::PACKAGE_EXTENSION;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Identifier(String);
 
 impl fmt::Display for Identifier {
@@ -14,7 +14,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Version(String);
 
 impl Version {
@@ -49,6 +49,7 @@ impl Project {
     }
 }
 
+#[derive(Debug)]
 pub struct Package {
     identifier: Identifier,
     version: Version,
@@ -66,6 +67,14 @@ impl Package {
         }
     }
 
+    pub fn as_identifier(&self) -> &Identifier {
+        &self.identifier
+    }
+
+    pub fn as_digest(&self) -> &[u8] {
+        &self.digest
+    }
+
     pub fn to_checksum(&self) -> String {
         hex::encode(&self.digest)
     }
@@ -81,8 +90,8 @@ impl Package {
         )
     }
 
-    pub fn from_path(path: &Path) -> Self {
-        let filename = path.file_stem().unwrap().to_str().unwrap();
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
+        let filename = path.as_ref().file_stem().unwrap().to_str().unwrap();
         let mut parts = filename.split('_');
 
         let identifier = parts.next().unwrap();
@@ -122,6 +131,10 @@ impl DeployLocation {
 
     pub fn add_deployment(&mut self, deployment: Deployment) {
         self.deployments.push(deployment);
+    }
+
+    pub fn is_checksum_deployed(&self, checksum: &str) -> bool {
+        self.deployments.iter().any(|deployment| deployment.checksum == checksum)
     }
 }
 
