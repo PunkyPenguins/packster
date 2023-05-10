@@ -1,7 +1,7 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
-use crate::{Result, path::{Absolute, NormalizedPathBuf}};
+use crate::{Result, path::{Absolute, NormalizedPathBuf}, Error};
 
 pub trait PathExt {
     fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
@@ -38,11 +38,24 @@ pub trait FileSystem : ReadOnlyFileSystem {
     fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()>;
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize>;
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> Result<Box<dyn Write + Send + Sync + 'a>>;
+    fn create_dir_recursively<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let path = path.as_ref();
+        let mut ancestors : Vec<_> = path.ancestors().collect();
+        ancestors.reverse();
+        for ancestor in ancestors {
+            if ! self.exists(ancestor){
+                self.create_dir(ancestor)?;
+            } else if self.is_file(ancestor) {
+                return Err(Error::AncestorIsAFile { ancestor: ancestor.to_path_buf(), path: path.to_path_buf() })
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait Archiver : Sync + Send {
     fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()>;
-    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: P1, archive_path: P2) -> Result<()>;
+    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()>;
 }
 
 pub trait Digester : Sync + Send {

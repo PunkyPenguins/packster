@@ -49,7 +49,11 @@ impl DeployOperation<ValidState> {
     pub fn extract_package<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<DeployOperation<ExtractedPackage>> {
         let checksum = &self.state.as_package().to_checksum();
         let deploy_path = self.request.path_location.join(checksum);
-        archiver.extract(filesystem, &self.request.path_package, &deploy_path)?;
+        archiver.extract(
+            filesystem,
+            self.request.path_package.as_absolute_path(),
+            deploy_path.as_absolute_path()
+        )?;
         Self::ok_with_state(self.request, ExtractedPackage { valid_package: self.state, deploy_path })
     }
 }
