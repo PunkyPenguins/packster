@@ -64,10 +64,6 @@ pub struct ParsedPackage<S> {
     pub package: Package
 }
 
-impl <S>AsPackage for ParsedPackage<S> {
-    fn as_package(&self) -> &Package { &self.package }
-}
-
 //Example about how to factorize common behaviors such as parsing package from path, providing an extra level of indirection
 impl <S, R: AsPackagePath>Operation<S, R> {
     pub fn parse_package_path(self) -> Result<Operation<ParsedPackage<S>, R>> {
@@ -77,6 +73,10 @@ impl <S, R: AsPackagePath>Operation<S, R> {
             ParsedPackage { state: self.state, package }
         )
     }
+}
+
+impl <S>AsPackage for ParsedPackage<S> {
+    fn as_package(&self) -> &Package { &self.package }
 }
 
 impl <S>AsLocation for ParsedPackage<ParsedLocation<S>> {
@@ -101,10 +101,6 @@ pub struct ParsedLocation<S> {
     pub location: DeployLocation
 }
 
-impl <S>AsLocation for ParsedLocation<S> {
-    fn as_location(&self) -> &DeployLocation { &self.location }
-}
-
 impl <S, R: AsPathLocation>Operation<S, R> {
     pub fn parse_location_lockfile<F: ReadOnlyFileSystem, P: Parser>(self, filesystem: &F, parser: &P) -> Result<Operation<ParsedLocation<S>, R>> {
         let lockfile_path = self.request.to_lockfile_location();
@@ -117,6 +113,10 @@ impl <S, R: AsPathLocation>Operation<S, R> {
             }
         )
     }
+}
+
+impl <S>AsLocation for ParsedLocation<S> {
+    fn as_location(&self) -> &DeployLocation { &self.location }
 }
 
 impl <S>AsPackage for ParsedLocation<ParsedPackage<S>> {
