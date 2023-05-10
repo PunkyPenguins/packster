@@ -1,13 +1,14 @@
-use std::{io::empty, path::Path};
-use flate2::{write::GzEncoder, Compression};
-use tar::{Header, Builder, EntryType};
-use packster_core::{port::{FileSystem, Archiver}, path::Absolute};
+use std::{io::{empty, self}, path::Path};
+use flate2::{write::GzEncoder, Compression, read::GzDecoder};
+use tar::{Header, Builder, EntryType, Archive};
+use packster_core::{Error as CoreError, port::{FileSystem, Archiver}, path::Absolute};
 use crate::{Result, Error};
 
 #[derive(Default)]
 pub struct TarballArchiver;
 
 //TODO add some logging and integration tests
+//Note : this implementation does not covers: symlinks, hardlinks, access rights, owners, created / modified time.
 impl Archiver for TarballArchiver {
     fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
         let writer = filesystem.open_write(archive_path)?;
@@ -41,7 +42,39 @@ impl Archiver for TarballArchiver {
         Ok(())
     }
 
-    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: P1, archive_path: P2) -> Result<()> {
-        todo!()
+    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
+        let reader = filesystem.open_read(archive_path)?;
+        let decoder = GzDecoder::new(reader);
+         let mut archive = Archive::new(decoder);
+
+        let mut directories = Vec::new();
+        for entry in archive.entries().map_err(Error::from)? {
+            let mut file = entry.map_err(Error::from)?;
+            match file.header().entry_type() {
+                EntryType::Directory => directories.push(file),
+                _ => {
+                    let relative_file_path = file.path().map_err(Error::from)?;
+                    let absolute_file_path = expand_path.join(relative_file_path);
+                    if filesystem.exists(&absolute_file_path) {
+                        return Err(CoreError::NodeAlreadyExists(absolute_file_path.into()))
+                    }
+                    if let Some(parent_absolute_path) = absolute_file_path.as_ref().parent() {
+                        filesystem.create_dir_recursively(parent_absolute_path)?;
+                    }
+                    let mut writer = filesystem.open_write(absolute_file_path)?;
+                    io::copy(&mut file, &mut writer).map_err(Error::from)?;
+                }
+            }
+        }
+
+        for directory in directories {
+            let relative_directory_path = directory.path().map_err(Error::from)?;
+            let absolute_directory_path = expand_path.join(relative_directory_path);
+            filesystem.create_dir_recursively(absolute_directory_path)?;
+        }
+
+        Ok(())
     }
 }
+
+//TODO test extract and archive to/from InMemoryFileSystem

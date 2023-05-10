@@ -15,7 +15,9 @@ pub enum Error {
     LocationPathIsNotADirectory(PathBuf),
     LocationManifestPathIsNotAFile(PathBuf),
     PackageChecksumDoNotMatch{package_path: PathBuf, package_id: String, package_checksum: String},
-    PackageAlreadyDeployedInLocation(String)
+    PackageAlreadyDeployedInLocation(String),
+    AncestorIsAFile{ancestor: PathBuf, path: PathBuf},
+    NodeAlreadyExists(PathBuf)
 }
 
 impl fmt::Display for Error {
@@ -39,7 +41,9 @@ impl fmt::Display for Error {
                 package_checksum,
                 package_path.to_string_lossy()
             ),
-            PackageAlreadyDeployedInLocation(package_id) => write!(f,"Package {package_id} already exists in location")
+            PackageAlreadyDeployedInLocation(package_id) => write!(f,"Package {package_id} already exists in location"),
+            AncestorIsAFile{ ancestor, path } => write!(f, "Ancestor {} of {} is a file", ancestor.to_string_lossy(), path.to_string_lossy()),
+            NodeAlreadyExists(path) => write!(f,"Resource {} already exists", path.to_string_lossy()),
         }
     }
 }

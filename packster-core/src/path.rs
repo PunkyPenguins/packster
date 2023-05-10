@@ -91,12 +91,14 @@ impl <T: AsRef<Path>>AsRef<Path> for Absolute<T> {
     fn as_ref(&self) -> &Path { self.0.as_ref() }
 }
 
+impl From<Absolute<PathBuf>> for PathBuf {
+    fn from(value: Absolute<PathBuf>) -> Self {
+        value.0
+    }
+}
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Relative<T: AsRef<Path>>(T);
-
-impl <T: AsRef<Path>>AsRef<Path> for Relative<T> {
-    fn as_ref(&self) -> &Path { self.0.as_ref() }
-}
 
 impl <T: AsRef<Path>>Relative<T> {
     pub fn assume_relative(path: T) -> Self {
@@ -113,6 +115,16 @@ impl <T: AsRef<Path>>Relative<T> {
 
     pub fn to_absolute<P: AsRef<Path>>(&self, base: &Absolute<P>) -> Absolute<PathBuf> {
         base.join(self.0.as_ref())
+    }
+}
+
+impl <T: AsRef<Path>>AsRef<Path> for Relative<T> {
+    fn as_ref(&self) -> &Path { self.0.as_ref() }
+}
+
+impl From<Relative<PathBuf>> for PathBuf {
+    fn from(value: Relative<PathBuf>) -> Self {
+        value.0
     }
 }
 
