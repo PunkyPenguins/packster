@@ -35,8 +35,8 @@ impl fmt::Display for Error {
             PackageChecksumDoNotMatch{ package_path, package_id, package_checksum } => write!(
                 f,
                 "Package {} checksum {} does not match with file {}",
-                package_checksum,
                 package_id,
+                package_checksum,
                 package_path.to_string_lossy()
             ),
             PackageAlreadyDeployedInLocation(package_id) => write!(f,"Package {package_id} already exists in location")

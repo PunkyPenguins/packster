@@ -32,12 +32,11 @@ pub type DeployOperation<S> = Operation<S, DeployRequest>;
 
 type ValidState = MatchingChecksum<NotYetDeployed<ParsedLocation<ParsedPackage<New>>>>;
 
-fn as_package(valid_package: &ValidState) -> &Package {
-    valid_package.matching_checksum.not_yet_deployed.as_package()
-}
-
 fn into_package_and_location(valid_package: ValidState) -> (Package, DeployLocation) {
-    (valid_package.matching_checksum.not_yet_deployed.state.package, valid_package.matching_checksum.not_yet_deployed.location)
+    (
+        valid_package.matching_checksum.not_yet_deployed.state.package,
+        valid_package.matching_checksum.not_yet_deployed.location
+    )
 }
 
 pub struct ExtractedPackage {
@@ -48,7 +47,7 @@ pub struct ExtractedPackage {
 //An emerging good practise here : keep read operations as generic as possible and write operation as specific as possible
 impl DeployOperation<ValidState> {
     pub fn extract_package<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<DeployOperation<ExtractedPackage>> {
-        let checksum = as_package(&self.state).to_checksum();
+        let checksum = &self.state.as_package().to_checksum();
         let deploy_path = self.request.path_location.join(checksum);
         archiver.extract(filesystem, &self.request.path_package, &deploy_path)?;
         Self::ok_with_state(self.request, ExtractedPackage { valid_package: self.state, deploy_path })

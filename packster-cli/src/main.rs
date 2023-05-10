@@ -58,7 +58,8 @@ impl CommandLine {
                         .map(
                             |op|
                             println!("Empty deployment created at : {}", op.get_request().as_path_location().as_ref().to_string_lossy())
-                        )?,
+                        )?
+                ,
                 Command::DeployFile(deploy_file_command) =>
                     Operation::new(DeployRequest::from(deploy_file_command), New)
                         .parse_package_path()?
