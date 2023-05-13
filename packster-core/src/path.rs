@@ -134,6 +134,7 @@ mod test {
     use super::*;
 
     #[test]
+    #[cfg(not(unix))]
     pub fn test_normalize_path_handle_different_separators(){
         assert_eq!(
             normalize_path("C:\\this/is\\a/test/of/inconstistant\\separators"),
@@ -193,6 +194,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(unix))]
     fn test_normalize_preserve_prefix () {
         assert_eq!(
             normalize_path("C:\\relative\\.\\eaten\\..\\path\\depth\\.\\.."),
