@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use std::{io::Read, path::{PathBuf, Path}, str::FromStr, println, matches };
+    use std::{io::Read, path::{PathBuf, Path}, str::FromStr, matches};
     use indoc::indoc;
     use base64::{Engine as _, engine::general_purpose};
 
@@ -180,4 +180,19 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn test_init_location_lockfile_present_error_case() -> Result<()> {
+        let filesystem = InMemoryFileSystem::default();
+        filesystem.create_dir("/my")?;
+        filesystem.create_dir("/my/location")?;
+        filesystem.create(Path::new("/my/location").join(LOCKFILE_NAME))?;
+
+        let request = InitLocationRequest::new(Absolute::assume_absolute(PathBuf::from("/my/location")));
+        let result = Operation::new(request, New)
+            .initialize_lockfile(&filesystem, &Json);
+
+        assert!(matches!(result, Result::Err(Error::AlreadyPresentLockfile(_))));
+
+        Ok(())
+    }
 }
