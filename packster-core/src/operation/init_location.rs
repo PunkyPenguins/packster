@@ -1,6 +1,6 @@
 use std::path::{PathBuf, Path};
 
-use crate::{Result, path::Absolute, port::{ FileSystem, Serializer}, domain::{DeployLocation}};
+use crate::{Result, Error, path::Absolute, port::{ FileSystem, Serializer }, domain::DeployLocation};
 use super::{Operation, New, AsPathLocation};
 
 pub struct InitLocationRequest {
@@ -24,12 +24,11 @@ pub type InitLocationOperation<S> = Operation<S, InitLocationRequest>;
 
 pub struct LocationInitialized;
 
-//TODO proper error from filesystem if : lockfile is not an existing directory, and if location directory is a file
 impl InitLocationOperation<New> {
     pub fn initialize_lockfile<F: FileSystem, S: Serializer>(self, filesystem: &F, serializer: &S) -> Result<InitLocationOperation<LocationInitialized>> {
         let lockfile_path = self.request.to_lockfile_location();
 
-        abort_if_something_already_present(&lockfile_path, filesystem)?;
+        ensure_that_no_lockfile_is_present(&lockfile_path, filesystem)?;
 
         let location_path = self.request.location_directory.as_ref();
         let is_free_slot = ! filesystem.is_directory(location_path);
@@ -44,8 +43,11 @@ impl InitLocationOperation<New> {
     }
 }
 
-pub fn abort_if_something_already_present<F: FileSystem, P: AsRef<Path>>(_path: P, _filesystem: &F) -> Result<()> {
-    println!("TODO check if the location is not already present");
+
+pub fn ensure_that_no_lockfile_is_present<F: FileSystem, P: AsRef<Path>>(path: P, filesystem: &F) -> Result<()> {
+    if filesystem.exists(&path) {
+         return Err(Error::AlreadyPresentLockfile(path.as_ref().to_path_buf()));
+    }
     Ok(())
 }
 
