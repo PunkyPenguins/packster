@@ -35,6 +35,7 @@ impl Archiver for TarballArchiver {
                 tar_builder.append_data(&mut header, &found_relative_path, reader).map_err(Error::from)?;
             } else if filesystem.is_directory(found_entry.as_path()) {
                 header.set_entry_type(EntryType::Directory);
+                header.set_size(0);
                 tar_builder.append_data(&mut header, &found_relative_path, empty()).map_err(Error::from)?;
             }
         }
@@ -49,11 +50,11 @@ impl Archiver for TarballArchiver {
 
         let mut directories = Vec::new();
         for entry in archive.entries().map_err(Error::from)? {
-            let mut file = entry.map_err(Error::from)?;
-            match file.header().entry_type() {
-                EntryType::Directory => directories.push(file),
+            let mut node = entry.map_err(Error::from)?;
+            match node.header().entry_type() {
+                EntryType::Directory => directories.push(node),
                 _ => {
-                    let relative_file_path = file.path().map_err(Error::from)?;
+                    let relative_file_path = node.path().map_err(Error::from)?;
                     let absolute_file_path = expand_path.join(relative_file_path);
                     if filesystem.exists(&absolute_file_path) {
                         return Err(CoreError::NodeAlreadyExists(absolute_file_path.into()))
@@ -62,7 +63,7 @@ impl Archiver for TarballArchiver {
                         filesystem.create_dir_recursively(parent_absolute_path)?;
                     }
                     let mut writer = filesystem.open_write(absolute_file_path)?;
-                    io::copy(&mut file, &mut writer).map_err(Error::from)?;
+                    io::copy(&mut node, &mut writer).map_err(Error::from)?;
                 }
             }
         }
@@ -78,3 +79,53 @@ impl Archiver for TarballArchiver {
 }
 
 //TODO test extract and archive to/from InMemoryFileSystem
+
+#[cfg(test)]
+mod test {
+    use packster_core::port::ReadOnlyFileSystem;
+
+    use crate::InMemoryFileSystem;
+
+    use super::*;
+
+    #[test]
+    fn test_archive_unarchive_reciprocal() -> Result<()> {
+        let archiver = TarballArchiver;
+        let filesystem = InMemoryFileSystem::default();
+
+        filesystem.create_dir_recursively("/my/a_directory/a_subdirectory")?;
+        filesystem.open_write("/my/a_first_file.txt")?
+            .write_all(b"Hello world from atop").unwrap();
+        filesystem.open_write("/my/a_directory/a_second_file.txt")?
+            .write_all(b"Hello world from bottom").unwrap();
+        filesystem.open_write("/punk_file.txt")?
+            .write_all(b"I shall not be archived !").unwrap();
+
+        archiver.archive(
+            &filesystem,
+            Absolute::assume_absolute("/my"),
+            Absolute::assume_absolute("/my_archive.tar")
+        )?;
+
+        assert!(filesystem.is_file("/my_archive.tar"));
+        assert!(filesystem.file_size("/my_archive.tar")? > 0);
+
+        archiver.extract(
+            &filesystem,
+            Absolute::assume_absolute("/my_extracted"),
+            Absolute::assume_absolute("/my_archive.tar")
+        )?;
+
+        assert!(filesystem.is_file("/my_extracted/a_first_file.txt"));
+        assert_eq!(filesystem.read_to_string("/my_extracted/a_first_file.txt")?, "Hello world from atop");
+
+        assert!(filesystem.is_file("/my_extracted/a_directory/a_second_file.txt"));
+        assert_eq!(filesystem.read_to_string("/my_extracted/a_directory/a_second_file.txt")?, "Hello world from bottom");
+
+        assert!(filesystem.is_directory("/my_extracted/a_directory"));
+
+        assert!(!filesystem.is_file("/my_extracted/punk_file.txt"));
+
+        Ok(())
+    }
+}
