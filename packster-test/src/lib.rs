@@ -144,7 +144,9 @@ mod test {
         assert!(filesystem.is_file("/my/location/d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4/a_directory/a_another_file.txt"));
         assert_eq!(filesystem.read_to_string("/my/location/d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4/a_directory/a_another_file.txt")?, "Hello from bottom !");
 
-        assert_ne!(filesystem.read_to_string(lockfile_path)?, empty_lockfile_content);
+        let lockfile_content = filesystem.read_to_string(lockfile_path)?;
+        assert_ne!(lockfile_content, empty_lockfile_content);
+        assert!(lockfile_content.contains("d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"));
 
         Ok(())
     }

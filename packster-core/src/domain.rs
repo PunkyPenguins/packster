@@ -2,6 +2,7 @@ use std::{ path::Path, fmt, str::FromStr };
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
 use regex::Regex;
+use hex;
 
 use crate::{ Result, Error, PACKAGE_EXTENSION };
 
@@ -34,7 +35,10 @@ impl fmt::Display for Version {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
-pub struct Checksum(Vec<u8>);
+pub struct Checksum(
+    #[serde(with = "hex")]
+    Vec<u8>
+);
 
 impl FromStr for Checksum {
     type Err = Error;
@@ -60,7 +64,6 @@ impl From<Vec<u8>> for Checksum {
         Checksum(value)
     }
 }
-
 #[derive(Deserialize)]
 pub struct Project {
     identifier: Identifier,
