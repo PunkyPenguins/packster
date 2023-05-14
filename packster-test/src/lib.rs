@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use std::{io::Read, path::{PathBuf, Path}};
+    use std::{io::Read, path::{PathBuf, Path}, str::FromStr};
     use indoc::indoc;
 
     use packster_core::{
@@ -12,7 +12,7 @@ mod test {
         },
         Result,
         operation::{PackRequest, Operation, New, InitLocationRequest},
-        path::Absolute, LOCKFILE_NAME
+        path::Absolute, LOCKFILE_NAME, domain::Checksum
     };
     use packster_infrastructure::{
         InMemoryFileSystem,
@@ -25,8 +25,8 @@ mod test {
         pub struct DigesterMock;
 
         impl Digester for DigesterMock {
-            fn generate_checksum<R: Read>(&self, _: R) -> Result<Vec<u8>> {
-                Ok(hex::decode("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad").unwrap())
+            fn generate_checksum<R: Read>(&self, _: R) -> Result<Checksum> {
+                Ok(Checksum::from_str("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad").unwrap())
             }
         }
 

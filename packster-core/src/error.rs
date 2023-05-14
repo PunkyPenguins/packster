@@ -1,11 +1,14 @@
 use std::{fmt,error, path::PathBuf};
 
+use hex::FromHexError;
+
 use crate::path::Absolute;
 
 #[derive(Debug)]
 pub enum Error {
     Infrastructure(Box<dyn error::Error>),
     Application(Box<dyn error::Error>),
+    HexadecimalDecodingError(FromHexError),
     ManifesPathIsADirectory(PathBuf),
     ManifestPathDoesNotExist(PathBuf),
     MissingMandatoryField { entity_name: &'static str, field_name: &'static str },
@@ -26,6 +29,7 @@ impl fmt::Display for Error {
         match self {
             Infrastructure(error) => write!(f, "Infrastructure error : {error}"),
             Application(error) => write!(f, "Application error : {error}"),
+            HexadecimalDecodingError(error) => write!(f, "Hexadecimal decoding error : {error}"),
             ManifesPathIsADirectory(path) => write!(f, "Manifest path is not a directory : {}", path.to_string_lossy()),
             ManifestPathDoesNotExist(path) => write!(f, "Manifest path does not exist : {}", path.to_string_lossy()),
             MissingMandatoryField { entity_name, field_name } => write!(f, "Missing infrastructure field {entity_name} for entity {field_name}"),
@@ -54,7 +58,12 @@ impl error::Error for Error {
         match self {
             Infrastructure(error) => Some(error.as_ref()),
             Application(error) => Some(error.as_ref()),
+            HexadecimalDecodingError(error) => Some(error),
             _ => None,
         }
     }
+}
+
+impl From<FromHexError> for Error {
+    fn from(error: FromHexError) -> Self { Error::HexadecimalDecodingError(error) }
 }
