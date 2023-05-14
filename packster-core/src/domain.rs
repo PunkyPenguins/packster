@@ -1,4 +1,4 @@
-use std::{ path::Path, fmt, str::FromStr, println };
+use std::{ path::Path, fmt, str::FromStr };
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
 use regex::Regex;

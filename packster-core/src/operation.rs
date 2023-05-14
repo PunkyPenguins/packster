@@ -131,9 +131,9 @@ pub struct NotYetDeployed<S> { pub not_yet_deployed: S }
 impl <S: AsPackage + AsLocation, R>Operation<S, R> {
     pub fn probe_package_not_deployed_in_location(self) -> Result<Operation<NotYetDeployed<S>, R>> {
         if self.state.as_location().is_checksum_deployed(self.state.as_package().as_checksum()) {
-            Self::ok_with_state(self.request, NotYetDeployed { not_yet_deployed: self.state })
-        } else {
             Err(Error::PackageAlreadyDeployedInLocation(self.state.as_package().as_identifier().to_string()))
+        } else {
+            Self::ok_with_state(self.request, NotYetDeployed { not_yet_deployed: self.state })
         }
     }
 }
