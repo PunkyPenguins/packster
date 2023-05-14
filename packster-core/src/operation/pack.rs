@@ -4,7 +4,7 @@ use crate::{
     Result,
     port::{ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, UniqueIdentifierGenerator},
     path::Absolute,
-    domain::{Project, Package, Version},
+    domain::{Project, Package, Version, Checksum},
     PACKAGE_EXTENSION, PROJECT_MANIFEST_NAME,
 };
 
@@ -78,17 +78,17 @@ impl PackOperation<IdentifiedProject> {
 
 pub struct DigestedArchivedProject {
     pub archived: ArchivedProject,
-    pub digest: Vec<u8>
+    pub checksum: Checksum
 }
 
 impl PackOperation<ArchivedProject> {
     pub fn digest<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<PackOperation<DigestedArchivedProject>> {
-        let digest = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
+        let checksum = digester.generate_checksum(filesystem.open_read(&self.state.archive_path)?)?;
         Self::ok_with_state(
             self.request,
             DigestedArchivedProject {
                 archived: self.state,
-                digest
+                checksum
             }
         )
     }
@@ -97,14 +97,14 @@ impl PackOperation<ArchivedProject> {
 impl PackOperation<DigestedArchivedProject> {
     pub fn finalize<F: FileSystem>(self, filesystem: &F, packster_version: &str) -> Result<PackOperation<Package>> {
         let DigestedArchivedProject {
-            digest,
+            checksum,
             archived: ArchivedProject {
                 project,
                 archive_path,
             }
         } = self.state;
 
-        let package = Package::new(project, digest, Version::new(packster_version));
+        let package = Package::new(project, checksum, Version::new(packster_version));
         let final_archive_path = archive_path.with_file_name(package.to_file_name());
 
         filesystem.rename(archive_path, final_archive_path)?;

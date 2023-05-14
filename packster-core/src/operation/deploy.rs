@@ -47,7 +47,7 @@ pub struct ExtractedPackage {
 //An emerging good practise here : keep read operations as generic as possible and write operation as specific as possible
 impl DeployOperation<ValidState> {
     pub fn extract_package<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<DeployOperation<ExtractedPackage>> {
-        let checksum = &self.state.as_package().to_checksum();
+        let checksum = &self.state.as_package().as_checksum().to_string();
         let deploy_path = self.request.path_location.join(checksum);
         archiver.extract(
             filesystem,
@@ -66,7 +66,7 @@ pub struct DeployedPackage {
 impl DeployOperation<ExtractedPackage> {
     pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(self, filesystem: &F, serializer: &Sr) -> Result<DeployOperation<DeployedPackage>> {
         let (package, mut location) = into_package_and_location(self.state.valid_package);
-        let deployment: Deployment = Deployment::new(package.to_checksum());
+        let deployment: Deployment = Deployment::new(package.as_checksum().clone());
         location.add_deployment(deployment);
         let deploy_location_file_content = serializer.serialize(&location)?;
         filesystem.write_all(self.request.to_lockfile_location(), deploy_location_file_content.as_bytes())?;

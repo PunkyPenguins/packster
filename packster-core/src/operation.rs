@@ -130,7 +130,7 @@ pub struct NotYetDeployed<S> { pub not_yet_deployed: S }
 
 impl <S: AsPackage + AsLocation, R>Operation<S, R> {
     pub fn probe_package_not_deployed_in_location(self) -> Result<Operation<NotYetDeployed<S>, R>> {
-        if self.state.as_location().is_checksum_deployed(&self.state.as_package().to_checksum()) {
+        if self.state.as_location().is_checksum_deployed(self.state.as_package().as_checksum()) {
             Self::ok_with_state(self.request, NotYetDeployed { not_yet_deployed: self.state })
         } else {
             Err(Error::PackageAlreadyDeployedInLocation(self.state.as_package().as_identifier().to_string()))
@@ -158,14 +158,14 @@ impl <S: AsPackage, R: AsPackagePath>Operation<S, R> {
     pub fn validate_package_checksum<F: ReadOnlyFileSystem, D: Digester>(self, filesystem: &F, digester: &D) -> Result<Operation<MatchingChecksum<S>, R>> {
         let package_path = self.request.as_package_path();
         let digest = digester.generate_checksum(filesystem.open_read(&package_path)?)?;
-        if digest == self.state.as_package().as_digest() {
+        if digest == *self.state.as_package().as_checksum() {
             Self::ok_with_state(self.request, MatchingChecksum { matching_checksum: self.state })
         } else {
             Err(
                 Error::PackageChecksumDoNotMatch {
                     package_path: package_path.as_ref().to_path_buf(),
                     package_id: self.state.as_package().as_identifier().to_string(),
-                    package_checksum: self.state.as_package().to_checksum()
+                    package_checksum: self.state.as_package().as_checksum().to_string()
                 }
             )
         }

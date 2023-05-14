@@ -1,7 +1,7 @@
 use std::{path::Path, io::{Read, Write}};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
-use crate::{Result, path::{Absolute, NormalizedPathBuf}, Error};
+use crate::{Result, path::{Absolute, NormalizedPathBuf}, Error, domain::Checksum};
 
 pub trait PathExt {
     fn is_ancestor_of<P: AsRef<Path>>(&self, child_path: P) -> bool;
@@ -59,8 +59,7 @@ pub trait Archiver : Sync + Send {
 }
 
 pub trait Digester : Sync + Send {
-    fn generate_checksum<R: Read>(&self, reader: R) -> Result<Vec<u8>>;
-    // fn verify_checksum<R: Read>(&self, reader: R, checksum: &[u8]) -> bool;
+    fn generate_checksum<R: Read>(&self, reader: R) -> Result<Checksum>;
 }
 
 pub trait UniqueIdentifierGenerator : Sync + Send {
