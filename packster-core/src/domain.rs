@@ -1,7 +1,7 @@
-use std::{ path::Path, fmt, str::FromStr };
-
-
+use std::{ path::Path, fmt, str::FromStr, println };
 use serde::{Deserialize, Serialize};
+use lazy_static::lazy_static;
+use regex::Regex;
 
 use crate::{ Result, Error, PACKAGE_EXTENSION };
 
@@ -114,15 +114,18 @@ impl Package {
         )
     }
 
-    //TODO unit test
+    //TODO test reciprocity with to_file_name
     pub fn from_path<P: AsRef<Path>>(path: P) -> Self { //TODO handle error properly
+        lazy_static! {
+            static ref PACKAGE_FILENAME_REGEXP: Regex = Regex::new("(?P<identifier>[^_]+)_(?P<version>[^_]+)_(?P<checksum>[^.]+).(?P<packster_version>[^.]+)").unwrap();
+        }
         let filename = path.as_ref().file_stem().unwrap().to_str().unwrap();
-        let mut parts = filename.split('_');
+        let captures = PACKAGE_FILENAME_REGEXP.captures(filename).unwrap();
 
-        let identifier = parts.next().unwrap();
-        let version = parts.next().unwrap();
-        let checksum = parts.next().unwrap();
-        let packster_version = parts.next().unwrap(); //TODO bug : delimiter is not "_" but "."
+        let identifier = captures.name("identifier").unwrap().as_str();
+        let version = captures.name("version").unwrap().as_str();
+        let checksum = captures.name("checksum").unwrap().as_str();
+        let packster_version = captures.name("packster_version").unwrap().as_str();
 
         Package {
             identifier: Identifier(identifier.to_owned()),
@@ -186,7 +189,7 @@ mod test {
 
     #[test]
     fn test_extract_checksum_from_path() {
-        let path = Path::new("C:\\Downloads\\static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad_f61f10025ad.packster");
+        let path = Path::new("C:\\Downloads\\static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.f61f10025ad.packster");
         let checksum = Package::from_path(path).as_checksum().to_string();
 
         assert_eq!(checksum, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
