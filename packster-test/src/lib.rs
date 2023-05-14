@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use std::{io::Read, path::{PathBuf, Path}, str::FromStr };
+    use std::{io::Read, path::{PathBuf, Path}, str::FromStr, println, matches };
     use indoc::indoc;
     use base64::{Engine as _, engine::general_purpose};
 
@@ -12,6 +12,7 @@ mod test {
             UniqueIdentifierGenerator,
         },
         Result,
+        Error,
         operation::{PackRequest, Operation, New, InitLocationRequest, DeployRequest},
         path::Absolute, LOCKFILE_NAME, domain::Checksum
     };
@@ -147,6 +148,34 @@ mod test {
         let lockfile_content = filesystem.read_to_string(lockfile_path)?;
         assert_ne!(lockfile_content, empty_lockfile_content);
         assert!(lockfile_content.contains("d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_deployment_already_existing_package() -> Result<()> {
+        let filesystem = InMemoryFileSystem::default();
+        filesystem.create_dir_recursively("/my/location")?;
+        // Made out of "my-simple-package" stub
+        let package_base64_str =  "H4sIAAAAAAAA/+3WsQ6CMBAG4JtNfIfKLrYiOLn7FqTqoY2FknIafXtlAQOuNjHct7RJx7//5XR+Mh6P5PwTQpO94T1TiYIUArg1pL0QMFG6z3+lc105uqDPC2MxpgfBT3WJr5NB/kptZQYSAph4/nu01onCu1IcHNH7WACbDh2o69/0/R/N/zRLt9z/AD76T67m8k9NrY/XhtDH79FvIayu8Vky2v82ivsfgjlhRaYw6MVOROVz2Ziytrhs/4U+YzSf3dE3xlXts4xlrCJgjDH2/15uvNI0ABIAAA==";
+        let package_bytes = base64_decode(package_base64_str);
+        filesystem.open_write("/my/my-simple-package_0.0.1_d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4.302e312e30.packster")?.write_all(&package_bytes).unwrap();
+
+        let lockfile_path = Path::new("/my/location").join(LOCKFILE_NAME);
+        let lockfile_content = r#"{"deployments":[{"checksum":"d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"}]}"#;
+        filesystem.open_write(&lockfile_path)?.write_all(lockfile_content.as_bytes()).unwrap();
+
+        let request = DeployRequest::new(
+            Absolute::assume_absolute(PathBuf::from("/my/my-simple-package_0.0.1_d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4.302e312e30.packster")),
+            Absolute::assume_absolute(PathBuf::from("/my/location")),
+        );
+
+        let result = Operation::new(request, New)
+            .parse_package_path()?
+            .parse_location_lockfile(&filesystem, &Json)?
+            .probe_package_not_deployed_in_location();
+
+        assert!(matches!(result, Err(Error::PackageAlreadyDeployedInLocation(_))));
 
         Ok(())
     }
