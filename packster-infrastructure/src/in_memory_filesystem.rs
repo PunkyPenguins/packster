@@ -181,6 +181,17 @@ impl FileSystem for InMemoryFileSystem {
             )
         )
     }
+
+    fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<()> {
+        if ! self.exists(path.as_ref()) { panic!("remove_dir_all: Path not found ! {:?}", path.as_ref()); }
+        if ! self.is_directory(path.as_ref()) { panic!("remove_dir_all: Path is not a directory ! {:?}", path.as_ref()); }
+
+        self.0.write()
+            .unwrap()
+            .remove(&NormalizedPathBuf::from(path.as_ref()));
+
+        Ok(())
+    }
 }
 
 pub struct InMemoryFile<'a>{

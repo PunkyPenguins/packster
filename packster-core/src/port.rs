@@ -51,6 +51,7 @@ pub trait FileSystem : ReadOnlyFileSystem {
         }
         Ok(())
     }
+    fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()>;
 }
 
 pub trait Archiver : Sync + Send {

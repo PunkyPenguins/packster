@@ -91,4 +91,8 @@ impl FileSystem for StdFileSystem {
     fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
         Ok(Box::new(File::create(path).map_err(Error::from)?))
     }
+
+    fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<()> {
+        Ok(fs::remove_dir_all(path).map_err(Error::from)?)
+    }
 }

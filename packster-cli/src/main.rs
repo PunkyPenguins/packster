@@ -1,3 +1,5 @@
+use std::println;
+
 use clap::{Parser, Subcommand};
 use packster_core::{operation::*, Result};
 use packster_infrastructure::{
@@ -13,6 +15,7 @@ mod parse;
 mod pack;
 mod init_location;
 mod deploy_file;
+mod undeploy;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -41,7 +44,7 @@ impl CommandLine {
         if let Some(command) = self.command {
             match command {
                 Command::Pack(pack_command) =>
-                    Operation::new(pack_command.into(), New)
+                    Operation::new(pack_command.into())
                         .parse_project(&StdFileSystem, &Toml)?
                         .generate_unique_identity(&UniqidIdentifierGenerator::default())
                         .archive(&StdFileSystem, &TarballArchiver)?
@@ -53,25 +56,44 @@ impl CommandLine {
                         )?
                 ,
                 Command::InitLocation(init_location_command) =>
-                    Operation::new(init_location_command.into(), New)
+                    Operation::new(init_location_command.into())
                         .initialize_lockfile(&StdFileSystem, &Json)
                         .map(
                             |op|
-                            println!("Empty deployment created at : {}", op.get_request().as_path_location().as_ref().to_string_lossy())
+                            println!("Empty deployment created at : {}", op.get_request().as_path_location().to_string_lossy())
                         )?
                 ,
                 Command::DeployFile(deploy_file_command) =>
-                    Operation::new(DeployRequest::from(deploy_file_command), New)
+                    Operation::new(DeployRequest::from(deploy_file_command))
                         .parse_package_path()?
                         .parse_location_lockfile(&StdFileSystem, &Json)?
                         .probe_package_not_deployed_in_location()?
                         .validate_package_checksum(&StdFileSystem, &Sha2Digester::Sha256)?
+                        .guess_deployment_path()
+                        .into_state()
                         .extract_package(&StdFileSystem, &TarballArchiver)?
                         .update_location_lockfile(&StdFileSystem, &Json)
-                        .map(|operation| {
-                            let state = operation.get_state();
-                            println!("Package {} deployed in {}", state.package.as_identifier(), state.deploy_path.as_ref().to_string_lossy())
-                        })?
+                        .map(|operation|
+                            println!(
+                                "Package {} deployed in {}",
+                                operation.as_package().as_identifier(),
+                                operation.as_package_path().to_string_lossy()
+                            )
+                        )?,
+                Command::Undeploy(undeploy_command) =>
+                    Operation::new(UndeployRequest::from(undeploy_command))
+                        .parse_location_lockfile(&StdFileSystem, &Json)?
+                        .probe_package_already_deployed_in_location()?
+                        .guess_deployment_path()
+                        .update_location_lockfile(&StdFileSystem, &Json)?
+                        .delete_deployment_directory(&StdFileSystem)
+                        .map(|operation|
+                            println!(
+                                "Deployment {} undeployed from location {}",
+                                operation.as_checksum().to_string(),
+                                operation.as_path_location().to_string_lossy()
+                            )
+                        )?
             };
         }
 
@@ -83,5 +105,6 @@ impl CommandLine {
 enum Command {
     Pack(pack::PackCommand),
     InitLocation(init_location::InitLocationCommand),
-    DeployFile(deploy_file::DeployFileCommand)
+    DeployFile(deploy_file::DeployFileCommand),
+    Undeploy(undeploy::UndeployCommand)
 }
