@@ -65,7 +65,7 @@ mod test {
         let project_workspace = Absolute::assume_absolute(PathBuf::from("/project"));
         let output_directory = Absolute::assume_absolute(PathBuf::from("/repo"));
         let request = PackRequest::new(project_workspace, output_directory);
-        Operation::new(request,New)
+        Operation::from(request,New)
             .parse_project(&filesystem, &Toml)?
             .generate_unique_identity(&UniqueIdentifierGeneratorMock)
             .archive(&filesystem, &filesystem_as_archiver)?
@@ -90,7 +90,7 @@ mod test {
         filesystem.create_dir("/my")?;
 
         let request = InitLocationRequest::new(Absolute::assume_absolute(PathBuf::from("/my/location")));
-        Operation::new(request, New)
+        Operation::from(request, New)
             .initialize_lockfile(&filesystem, &Json)?;
 
         let expected_lockfile_path = Path::new("/my/location").join(LOCKFILE_NAME);
@@ -120,11 +120,13 @@ mod test {
             Absolute::assume_absolute(PathBuf::from("/my/location")),
         );
 
-        Operation::new(request, New)
+        Operation::from(request, New)
             .parse_package_path()?
             .parse_location_lockfile(&filesystem, &Json)?
             .probe_package_not_deployed_in_location()?
             .validate_package_checksum(&filesystem, &Sha2Digester::Sha256)?
+            .guess_deployment_path()
+            .into_state()
             .extract_package(&filesystem, &TarballArchiver)?
             .update_location_lockfile(&filesystem, &Json)?;
 
@@ -170,7 +172,7 @@ mod test {
             Absolute::assume_absolute(PathBuf::from("/my/location")),
         );
 
-        let result = Operation::new(request, New)
+        let result = Operation::from(request, New)
             .parse_package_path()?
             .parse_location_lockfile(&filesystem, &Json)?
             .probe_package_not_deployed_in_location();
@@ -188,7 +190,7 @@ mod test {
         filesystem.create(Path::new("/my/location").join(LOCKFILE_NAME))?;
 
         let request = InitLocationRequest::new(Absolute::assume_absolute(PathBuf::from("/my/location")));
-        let result = Operation::new(request, New)
+        let result = Operation::from(request, New)
             .initialize_lockfile(&filesystem, &Json);
 
         assert!(matches!(result, Result::Err(Error::AlreadyPresentLockfile(_))));

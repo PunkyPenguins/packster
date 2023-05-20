@@ -30,10 +30,9 @@ impl InitLocationOperation<New> {
 
         ensure_that_no_lockfile_is_present(&lockfile_path, filesystem)?;
 
-        let location_path = self.request.location_directory.as_ref();
-        let is_free_slot = ! filesystem.is_directory(location_path);
+        let is_free_slot = ! filesystem.is_directory(&self.request.location_directory);
         if is_free_slot {
-            filesystem.create_dir(location_path)?
+            filesystem.create_dir(&self.request.location_directory)?
         }
 
         let deploy_location = DeployLocation::default();

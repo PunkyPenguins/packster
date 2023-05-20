@@ -151,7 +151,7 @@ impl Default for Package {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Deployment {
     checksum: Checksum
 }
@@ -178,6 +178,16 @@ impl DeployLocation {
 
     pub fn add_deployment(&mut self, deployment: Deployment) {
         self.deployments.push(deployment);
+    }
+
+    pub fn remove_deployment(&mut self, checksum: &Checksum) {
+        self.deployments
+            .retain(|deployment| deployment.as_checksum() != checksum)
+    }
+
+    pub fn get_deployment(&self, checksum: &Checksum) -> Option<&Deployment> {
+        self.deployments.iter()
+            .find(|deployment| deployment.as_checksum() == checksum)
     }
 
     pub fn is_checksum_deployed(&self, checksum: &Checksum) -> bool {

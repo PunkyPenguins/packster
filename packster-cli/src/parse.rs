@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
-use packster_core::path::Absolute;
+use std::{path::{Path, PathBuf}};
+use packster_core::{path::Absolute};
 
 pub fn try_from_current_dir(path: &str) -> std::io::Result<Absolute<PathBuf>> {
     let path = Path::new(path);
