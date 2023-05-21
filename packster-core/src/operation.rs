@@ -16,6 +16,9 @@ pub use deploy::*;
 mod undeploy;
 pub use undeploy::*;
 
+mod show_location;
+pub use show_location::*;
+
 use crate::{path::Absolute, LOCKFILE_NAME, domain::{DeployLocation, Package, Checksum}, Result};
 
 pub struct Operation<S, R>{

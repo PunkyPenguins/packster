@@ -95,6 +95,30 @@ impl CommandLine {
                                 operation.as_path_location().to_string_lossy()
                             )
                         )?
+                ,
+                Command::ShowLocation(show_location_command) => {
+                        Operation::new(ShowLocationRequest::from(show_location_command))
+                            .parse_location_lockfile(&StdFileSystem, &Json)
+                            .map(|operation|
+                                if operation.as_location().iter().next().is_some() {
+                                    operation.as_location()
+                                    .iter()
+                                    .for_each(|deployment| {
+                                        let package = deployment.as_ref();
+                                        println!(
+                                            "{} {} {}",
+                                            package.as_identifier(),
+                                            package.as_version(),
+                                            package.as_checksum().to_string()
+                                        )
+                                    })
+                                } else {
+                                    print!("Location contains no deployments")
+                                }
+                            )?
+                        ;
+                }
+
             };
         }
 
@@ -107,5 +131,6 @@ enum Command {
     Pack(pack::PackCommand),
     InitLocation(init_location::InitLocationCommand),
     DeployFile(deploy_file::DeployFileCommand),
-    Undeploy(undeploy::UndeployCommand)
+    Undeploy(undeploy::UndeployCommand),
+    ShowLocation(show_location::ShowLocationCommand)
 }
