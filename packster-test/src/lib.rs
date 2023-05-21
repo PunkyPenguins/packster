@@ -4,6 +4,7 @@ pub mod stub;
 
 use std::{io::Read, path::{PathBuf, Path}, str::FromStr, matches};
 use indoc::indoc;
+use serde_json::json;
 
 use packster_core::{
     port::{Digester, ReadOnlyFileSystem, FileSystem, UniqueIdentifierGenerator},
@@ -152,8 +153,17 @@ fn test_deployment_already_existing_package() -> Result<()> {
     filesystem.open_write("/my/my-simple-package_0.0.1_d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4.302e312e30.packster")?.write_all(&package_bytes).unwrap();
 
     let lockfile_path = Path::new("/my/location").join(LOCKFILE_NAME);
-    let lockfile_content = r#"{"deployments":[{"checksum":"d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"}]}"#;
-    filesystem.open_write(&lockfile_path)?.write_all(lockfile_content.as_bytes()).unwrap();
+    let lockfile_value = json!({
+        "deployments": [
+            {
+                "identifier": "my-simple-package",
+                "version": "0.0.1",
+                "checksum": "d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4",
+                "packster_version": "0.1.0"
+            }
+        ]
+    });
+    filesystem.open_write(&lockfile_path)?.write_all(lockfile_value.to_string().as_bytes()).unwrap();
 
     let request = DeployRequest::new(
         Absolute::assume_absolute(PathBuf::from("/my/my-simple-package_0.0.1_d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4.302e312e30.packster")),
@@ -193,8 +203,17 @@ fn test_undeploy_existing_deployment() -> Result<()> {
     filesystem.create("/my/location/d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4/packster.toml")?;
 
     let lockfile_path = Path::new("/my/location").join(LOCKFILE_NAME);
-    let lockfile_content = r#"{"deployments":[{"checksum":"d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"}]}"#;
-    filesystem.open_write(&lockfile_path)?.write_all(lockfile_content.as_bytes()).unwrap();
+    let lockfile_value = json!({
+        "deployments": [
+            {
+                "identifier": "my-simple-package",
+                "version": "0.0.1",
+                "checksum": "d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4",
+                "packster_version": "0.1.0"
+            }
+        ]
+    });
+    filesystem.open_write(&lockfile_path)?.write_all(lockfile_value.to_string().as_bytes()).unwrap();
 
     let request = UndeployRequest::new(
         Checksum::from_str("d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4")?,

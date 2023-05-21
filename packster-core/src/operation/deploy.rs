@@ -73,7 +73,7 @@ pub struct LockfileUpdated {
 impl DeployOperation<ExtractedPackage> {
     pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(mut self, filesystem: &F, serializer: &Sr) -> Result<DeployOperation<LockfileUpdated>> {
         let package = self.state.previous_state.as_package();
-        let deployment: Deployment = Deployment::new(package.as_checksum().clone());
+        let deployment: Deployment = Deployment::new(package.clone());
 
         let location = &mut self.state.previous_state.as_mut_location();
         location.add_deployment(deployment.clone());

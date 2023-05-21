@@ -419,6 +419,8 @@ dependencies = [
  "indoc",
  "packster-core",
  "packster-infrastructure",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

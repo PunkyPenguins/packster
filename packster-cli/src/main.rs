@@ -16,6 +16,7 @@ mod pack;
 mod init_location;
 mod deploy_file;
 mod undeploy;
+mod show_location;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 

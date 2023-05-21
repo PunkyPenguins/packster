@@ -6,7 +6,7 @@ use hex;
 
 use crate::{ Result, Error, PACKAGE_EXTENSION };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Identifier(String);
 
 impl fmt::Display for Identifier {
@@ -15,7 +15,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Version(String);
 
 impl Version {
@@ -80,7 +80,7 @@ impl Project {
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Package {
     identifier: Identifier,
     version: Version,
@@ -153,17 +153,14 @@ impl Default for Package {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Deployment {
-    checksum: Checksum
+    #[serde(flatten)]
+    package: Package
 }
 
 impl Deployment {
-    pub fn new( checksum: Checksum ) -> Self {
-        Deployment { checksum }
-    }
+    pub fn new( package: Package ) -> Self { Deployment { package } }
 
-    pub fn as_checksum(&self) -> &Checksum {
-        &self.checksum
-    }
+    pub fn as_checksum(&self) -> &Checksum { self.package.as_checksum() }
 }
 
 #[derive(Serialize, Deserialize, Default)]
