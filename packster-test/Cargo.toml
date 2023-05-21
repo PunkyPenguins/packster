@@ -8,4 +8,3 @@ packster-core = { path = "../packster-core" }
 packster-infrastructure = { path = "../packster-infrastructure", features=["test"] }
 indoc = "2.0.1"
 hex = "0.4.3"
-base64 = "0.21.0"
