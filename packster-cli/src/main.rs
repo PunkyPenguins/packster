@@ -60,7 +60,7 @@ impl CommandLine {
                         .initialize_lockfile(&StdFileSystem, &Json)
                         .map(
                             |op|
-                            println!("Empty deployment created at : {}", op.get_request().as_path_location().to_string_lossy())
+                            println!("Empty deployment created at : {}", op.as_path_location().to_string_lossy())
                         )?
                 ,
                 Command::DeployFile(deploy_file_command) =>
@@ -70,7 +70,6 @@ impl CommandLine {
                         .probe_package_not_deployed_in_location()?
                         .validate_package_checksum(&StdFileSystem, &Sha2Digester::Sha256)?
                         .guess_deployment_path()
-                        .into_state()
                         .extract_package(&StdFileSystem, &TarballArchiver)?
                         .update_location_lockfile(&StdFileSystem, &Json)
                         .map(|operation|
@@ -79,7 +78,8 @@ impl CommandLine {
                                 operation.as_package().as_identifier(),
                                 operation.as_package_path().to_string_lossy()
                             )
-                        )?,
+                        )?
+                ,
                 Command::Undeploy(undeploy_command) =>
                     Operation::new(UndeployRequest::from(undeploy_command))
                         .parse_location_lockfile(&StdFileSystem, &Json)?

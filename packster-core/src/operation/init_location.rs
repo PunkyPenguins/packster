@@ -13,20 +13,20 @@ impl InitLocationRequest {
     }
 }
 
-impl AsPathLocation for InitLocationRequest {
-    fn as_path_location(&self) -> Absolute<&Path> {
-        self.location_directory.as_absolute_path()
-    }
-}
 
 pub type InitLocationOperation<S> = Operation<S, InitLocationRequest>;
 
+impl <S>AsPathLocation for InitLocationOperation<S> {
+    fn as_path_location(&self) -> Absolute<&Path> {
+        self.request.location_directory.as_absolute_path()
+    }
+}
 
 pub struct LocationInitialized;
 
 impl InitLocationOperation<New> {
     pub fn initialize_lockfile<F: FileSystem, S: Serializer>(self, filesystem: &F, serializer: &S) -> Result<InitLocationOperation<LocationInitialized>> {
-        let lockfile_path = self.request.to_lockfile_location();
+        let lockfile_path = self.to_lockfile_location();
 
         ensure_that_no_lockfile_is_present(&lockfile_path, filesystem)?;
 
