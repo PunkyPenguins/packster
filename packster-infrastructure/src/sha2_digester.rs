@@ -3,14 +3,10 @@ use sha2::{Sha256, Digest};
 use packster_core::{port::Digester, domain::Checksum};
 use crate::{ Result, Error };
 
+#[derive(Default)]
 pub enum Sha2Digester {
+    #[default]
     Sha256
-}
-
-impl Default for Sha2Digester {
-    fn default() -> Self {
-        Sha2Digester::Sha256
-    }
 }
 
 impl Digester for Sha2Digester {
