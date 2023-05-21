@@ -13,7 +13,7 @@ pub struct ParsedPackage<P> {
 //Example about how to factorize common behaviors such as parsing package from path, providing an extra level of indirection
 impl <S, R>Operation<S, R> where Self: AsPackagePath {
     pub fn parse_package_path(self) -> Result<Operation<ParsedPackage<S>, R>> {
-        let package = Package::from_path(self.as_package_path()); //TODO try ?
+        let package = Package::from_path(self.as_package_path())?;
         Self::ok_with_state(
             self.request,
             ParsedPackage {
