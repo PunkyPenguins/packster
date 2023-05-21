@@ -69,6 +69,11 @@ pub trait AsPackage {
     fn as_package(&self) -> &Package;
 }
 
+// Forward to all operations containing state that implement this trait
+impl <S: AsPackage, R>AsPackage for Operation<S, R> {
+    fn as_package(&self) -> &Package { self.state.as_package() }
+}
+
 pub trait AsPathLocation {
     fn as_path_location(&self) -> Absolute<&Path>;
     fn to_lockfile_location(&self) -> Absolute<PathBuf> {
@@ -80,12 +85,11 @@ pub trait AsLocation {
     fn as_location(&self) -> &DeployLocation;
 }
 
-pub trait AsChecksum {
-    fn as_checksum(&self) -> &Checksum;
+impl <S: AsLocation, R>AsLocation for Operation<S, R> {
+    fn as_location(&self) -> &DeployLocation { self.state.as_location() }
 }
 
-impl <S: AsPackage>AsPackage for MatchingChecksum<S> {
-    fn as_package(&self) -> &Package {
-        self.previous_state.as_package()
-    }
+
+pub trait AsChecksum {
+    fn as_checksum(&self) -> &Checksum;
 }

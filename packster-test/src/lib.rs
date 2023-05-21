@@ -126,7 +126,6 @@ mod test {
             .probe_package_not_deployed_in_location()?
             .validate_package_checksum(&filesystem, &Sha2Digester::Sha256)?
             .guess_deployment_path()
-            .into_state()
             .extract_package(&filesystem, &TarballArchiver)?
             .update_location_lockfile(&filesystem, &Json)?;
 

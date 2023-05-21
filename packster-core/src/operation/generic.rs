@@ -5,8 +5,8 @@ use crate::{domain::{DeployLocation, Package, Deployment}, port::{Parser, ReadOn
 use super::{AsPackagePath, AsLocation, AsPackage, AsPathLocation, Operation, AsChecksum};
 
 
-pub struct ParsedPackage<S> {
-    pub previous_state: S,
+pub struct ParsedPackage<P> {
+    pub previous_state: P,
     pub package: Package
 }
 
@@ -16,17 +16,22 @@ impl <S, R>Operation<S, R> where Self: AsPackagePath {
         let package = Package::from_path(self.as_package_path()); //TODO try ?
         Self::ok_with_state(
             self.request,
-            ParsedPackage { previous_state: self.state, package }
+            ParsedPackage {
+                previous_state: self.state,
+                package
+            }
         )
     }
 }
 
-impl <S, R>AsPackage for Operation<ParsedPackage<S>, R> {
-    fn as_package(&self) -> &Package { &self.state.package }
+// Simple field accessor
+impl <S>AsPackage for ParsedPackage<S> {
+    fn as_package(&self) -> &Package { &self.package }
 }
 
-impl <S, R>AsLocation for Operation<ParsedPackage<ParsedLocation<S>>, R> {
-    fn as_location(&self) -> &DeployLocation { &self.state.previous_state.location }
+// Propagate through previous state
+impl <S: AsLocation> AsLocation for ParsedPackage<S> {
+    fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
 }
 
 pub struct ParsedLocation<S> {
@@ -48,12 +53,12 @@ impl <S, R>Operation<S, R> where Self: AsPathLocation {
     }
 }
 
-impl <S, R>AsLocation for Operation<ParsedLocation<S>, R> {
-    fn as_location(&self) -> &DeployLocation { &self.state.location }
+impl <S>AsLocation for ParsedLocation<S> {
+    fn as_location(&self) -> &DeployLocation { &self.location }
 }
 
-impl <S, R>AsPackage for Operation<ParsedLocation<ParsedPackage<S>>, R> {
-    fn as_package(&self) -> &Package { &self.state.previous_state.package }
+impl <S: AsPackage>AsPackage for ParsedLocation<S> {
+    fn as_package(&self) -> &Package { self.previous_state.as_package() }
 }
 
 
@@ -69,14 +74,13 @@ impl <S, R>Operation<S, R> where Self: AsPackage + AsLocation {
     }
 }
 
-impl <S, R>AsPackage for Operation<NotYetDeployed<ParsedLocation<ParsedPackage<S>>>, R> {
-    fn as_package(&self) -> &Package { &self.state.previous_state.previous_state.package }
+impl <S: AsPackage>AsPackage for NotYetDeployed<S> {
+    fn as_package(&self) -> &Package { self.previous_state.as_package() }
 }
 
-impl <S, R>AsLocation for Operation<NotYetDeployed<ParsedLocation<ParsedPackage<S>>>, R> {
-    fn as_location(&self) -> &DeployLocation { &self.state.previous_state.location }
+impl <S: AsLocation>AsLocation for NotYetDeployed<S> {
+    fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
 }
-
 
 pub struct AlreadyDeployed<S> { pub previous_state: S, pub existing_deployment: Deployment }
 
@@ -88,6 +92,14 @@ impl <S, R>Operation<S, R> where Self: AsChecksum + AsLocation {
             Err(Error::PackageNotYetDeployedInLocation(self.as_checksum().to_string()))
         }
     }
+}
+
+impl <S: AsPackage>AsPackage for AlreadyDeployed<S> {
+    fn as_package(&self) -> &Package { self.previous_state.as_package() }
+}
+
+impl <S: AsLocation>AsLocation for AlreadyDeployed<S> {
+    fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
 }
 
 pub struct MatchingChecksum<S> { pub previous_state: S }
@@ -110,6 +122,15 @@ impl <S, R>Operation<S, R> where Self: AsPackagePath + AsPackage {
     }
 }
 
+impl <S: AsPackage>AsPackage for MatchingChecksum<S> {
+    fn as_package(&self) -> &Package { self.previous_state.as_package() }
+}
+
+impl <S: AsLocation>AsLocation for MatchingChecksum<S> {
+    fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
+}
+
+
 pub struct DeploymentPath<S> { pub previous_state: S, pub deployment_path: Absolute<PathBuf> }
 
 impl <S, R> Operation<S, R> where Self: AsChecksum + AsPathLocation {
@@ -124,4 +145,12 @@ impl <S, R> Operation<S, R> where Self: AsChecksum + AsPathLocation {
             }
         )
     }
+}
+
+impl <S: AsPackage>AsPackage for DeploymentPath<S> {
+    fn as_package(&self) -> &Package { self.previous_state.as_package() }
+}
+
+impl <S: AsLocation>AsLocation for DeploymentPath<S> {
+    fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
 }
