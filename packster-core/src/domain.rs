@@ -129,7 +129,7 @@ impl Package {
         )
     }
 
-    //TODO test reciprocity with to_file_name
+    //TODO consider converting to From ?
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         lazy_static! {
             static ref PACKAGE_FILENAME_REGEXP: Regex = Regex::new("(?P<identifier>[^_]+)_(?P<version>[^_]+)_(?P<checksum>[^.]+).(?P<packster_version>[^.]+)").unwrap();
@@ -166,10 +166,6 @@ impl Package {
         let packster_version = captures.name("packster_version")
             .ok_or_else(|| Error::WrongFileNameFormat("Packster version missing".into(), path.to_path_buf()))
             .map(|m| m.as_str())
-            .map(|s| {
-                println!("S {s}");
-                s
-            })
             .and_then(|s| hex::decode(s).map_err(Error::from))
             .and_then(|b| String::from_utf8(b).map_err(Error::from))
             .and_then(|s| Version::from_str(&s))

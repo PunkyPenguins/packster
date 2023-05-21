@@ -239,7 +239,7 @@ impl Archiver for InMemoryFileSystem {
         Ok(())
     }
 
-    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, expand_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
+    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, _filesystem: &F, _expand_path: Absolute<P1>, _archive_path: Absolute<P2>) -> Result<()> {
         unimplemented!()
     }
 }
