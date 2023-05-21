@@ -98,13 +98,9 @@ impl Package {
         }
     }
 
-    pub fn as_identifier(&self) -> &Identifier {
-        &self.identifier
-    }
-
-    pub fn as_checksum(&self) -> &Checksum {
-        &self.checksum
-    }
+    pub fn as_identifier(&self) -> &Identifier { &self.identifier }
+    pub fn as_checksum(&self) -> &Checksum { &self.checksum }
+    pub fn as_version(&self) -> &Version { &self.version }
 
     pub fn to_file_name(&self) -> String {
         format!(
@@ -134,7 +130,7 @@ impl Package {
             identifier: Identifier(identifier.to_owned()),
             version: Version(version.to_owned()),
             checksum: Checksum::from_str(checksum).unwrap(),
-            packster_version: Version::new(packster_version) //TODO bug : has to be decoded and parsed to string => enforce semver through Version type
+            packster_version: Version::new(String::from_utf8_lossy(&hex::decode(packster_version).unwrap())) //TODO bug : enforce semver through Version type ( from_str )
         }
     }
 }
@@ -155,12 +151,17 @@ impl Default for Package {
 pub struct Deployment {
     #[serde(flatten)]
     package: Package
+    //TODO installed packster version
 }
 
 impl Deployment {
     pub fn new( package: Package ) -> Self { Deployment { package } }
 
     pub fn as_checksum(&self) -> &Checksum { self.package.as_checksum() }
+}
+
+impl AsRef<Package> for Deployment {
+    fn as_ref(&self) -> &Package { &self.package }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -190,6 +191,10 @@ impl DeployLocation {
     pub fn is_checksum_deployed(&self, checksum: &Checksum) -> bool {
         self.deployments.iter()
             .any(|deployment| deployment.as_checksum() == checksum)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Deployment> {
+        self.deployments.iter()
     }
 }
 

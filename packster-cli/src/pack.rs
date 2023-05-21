@@ -6,10 +6,10 @@ use crate::parse::try_from_current_dir;
 
 #[derive(Args)]
 pub struct PackCommand {
-    #[arg(short='p', long, value_parser=try_from_current_dir)]
+    #[arg(value_parser=try_from_current_dir)]
     pub project_workspace: Absolute<PathBuf>,
 
-    #[arg(short='o', long, value_parser=try_from_current_dir)]
+    #[arg(value_parser=try_from_current_dir)]
     pub package_output_directory: Absolute<PathBuf>
 }
 
