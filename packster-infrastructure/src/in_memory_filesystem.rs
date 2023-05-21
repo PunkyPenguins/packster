@@ -185,10 +185,19 @@ impl FileSystem for InMemoryFileSystem {
     fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<()> {
         if ! self.exists(path.as_ref()) { panic!("remove_dir_all: Path not found ! {:?}", path.as_ref()); }
         if ! self.is_directory(path.as_ref()) { panic!("remove_dir_all: Path is not a directory ! {:?}", path.as_ref()); }
+        let paths_to_delete : Vec<PathBuf> = self.walk(path.as_ref())
+            .map(|entry_result|
+                entry_result.map(|entry|
+                    entry.as_path().to_path_buf()
+                )
+            )
+            .collect::<Result<_>>()?;
 
-        self.0.write()
-            .unwrap()
-            .remove(&NormalizedPathBuf::from(path.as_ref()));
+        let mut btree_lock = self.0.write().unwrap();
+        for sub_path in paths_to_delete {
+            btree_lock.remove(&NormalizedPathBuf::from(sub_path.as_path()));
+        }
+        btree_lock.remove(&NormalizedPathBuf::from(path.as_ref()));
 
         Ok(())
     }
