@@ -1,4 +1,4 @@
-name: Packster
+name: ${{ github.actor }} test workflow for ${{ github.ref_name }}
 env:
   CARGO_TERM_COLOR: always
 on: [pull_request]
