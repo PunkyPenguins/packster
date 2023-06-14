@@ -1,4 +1,4 @@
-#![cfg_attr(all(not(debug_assertions), not(test)), deny(warnings))]
+#![cfg_attr(all(not(test)), deny(warnings))]
 #![forbid(unsafe_code)]
 #![warn(clippy::all)]
 
