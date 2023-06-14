@@ -160,3 +160,12 @@ Unarchive
 Dadou code la création de Location et je le supervise
 
 
+##
+
+on pr merge => revision release with commit sha
+on release => generate binary and update the release ?
+Source of version ?
+https://github.com/actions/labeler
+Elegance would be to create a release whenever the developer changed the front package (CLI) version ... or always, with a sha as revision ?
+
+Quand quelqu'un merge une MR je veux un build version + commit sha revision

@@ -81,6 +81,7 @@ impl Archiver for TarballArchiver {
 //TODO test extract and archive to/from InMemoryFileSystem
 
 #[cfg(test)]
+#[cfg(feature = "test")]
 mod test {
     use packster_core::port::ReadOnlyFileSystem;
 
