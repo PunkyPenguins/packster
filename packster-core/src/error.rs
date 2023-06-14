@@ -1,4 +1,4 @@
-use std::{fmt,error, path::PathBuf};
+use std::{fmt,error, path::PathBuf, string::FromUtf8Error};
 
 use hex::FromHexError;
 
@@ -9,6 +9,7 @@ pub enum Error {
     Infrastructure(Box<dyn error::Error>),
     Application(Box<dyn error::Error>),
     HexadecimalDecodingError(FromHexError),
+    FromUtf8Error(FromUtf8Error),
     ManifesPathIsADirectory(PathBuf),
     ManifestPathDoesNotExist(PathBuf),
     MissingMandatoryField { entity_name: &'static str, field_name: &'static str },
@@ -23,6 +24,9 @@ pub enum Error {
     AncestorIsAFile{ancestor: PathBuf, path: PathBuf},
     NodeAlreadyExists(PathBuf),
     AlreadyPresentLockfile(PathBuf),
+    NoFileNameInPath(PathBuf),
+    InvalidUtf8Path(PathBuf),
+    WrongFileNameFormat(String, PathBuf)
 }
 
 impl fmt::Display for Error {
@@ -31,6 +35,7 @@ impl fmt::Display for Error {
         match self {
             Infrastructure(error) => write!(f, "Infrastructure error : {error}"),
             Application(error) => write!(f, "Application error : {error}"),
+            FromUtf8Error(error) => write!(f, "Utf8 conversion error : {error}"),
             HexadecimalDecodingError(error) => write!(f, "Hexadecimal decoding error : {error}"),
             ManifesPathIsADirectory(path) => write!(f, "Manifest path is not a directory : {}", path.to_string_lossy()),
             ManifestPathDoesNotExist(path) => write!(f, "Manifest path does not exist : {}", path.to_string_lossy()),
@@ -52,6 +57,9 @@ impl fmt::Display for Error {
             AncestorIsAFile{ ancestor, path } => write!(f, "Ancestor {} of {} is a file", ancestor.to_string_lossy(), path.to_string_lossy()),
             NodeAlreadyExists(path) => write!(f,"Resource {} already exists", path.to_string_lossy()),
             AlreadyPresentLockfile(path) => write!(f, "Forbidden to override a lockfile {}", path.to_string_lossy()),
+            NoFileNameInPath(path) => write!(f, "No filename in path {}", path.to_string_lossy()),
+            InvalidUtf8Path(path) => write!(f, "Path {} contains invalid utf8 chacacters", path.to_string_lossy()),
+            WrongFileNameFormat(scope, path) => write!(f, "Path {} has a wrong filename formatting : {}", path.to_string_lossy(), scope),
         }
     }
 }
@@ -62,6 +70,7 @@ impl error::Error for Error {
         match self {
             Infrastructure(error) => Some(error.as_ref()),
             Application(error) => Some(error.as_ref()),
+            FromUtf8Error(error) => Some(error),
             HexadecimalDecodingError(error) => Some(error),
             _ => None,
         }
@@ -70,4 +79,9 @@ impl error::Error for Error {
 
 impl From<FromHexError> for Error {
     fn from(error: FromHexError) -> Self { Error::HexadecimalDecodingError(error) }
+}
+
+
+impl From<FromUtf8Error> for Error {
+    fn from(error: FromUtf8Error) -> Self { Error::FromUtf8Error(error) }
 }

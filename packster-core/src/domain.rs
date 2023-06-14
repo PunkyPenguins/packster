@@ -6,8 +6,15 @@ use hex;
 
 use crate::{ Result, Error, PACKAGE_EXTENSION };
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Identifier(String);
+
+impl FromStr for Identifier {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(Identifier(s.to_string())) //TODO proper identifier validation
+    }
+}
 
 impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -15,7 +22,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Version(String);
 
 impl Version {
@@ -31,6 +38,14 @@ impl Version {
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl FromStr for Version {
+    type Err = Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(Version(s.to_string())) //TODO enforce semver through Version type ( from_str )
     }
 }
 
@@ -101,6 +116,7 @@ impl Package {
     pub fn as_identifier(&self) -> &Identifier { &self.identifier }
     pub fn as_checksum(&self) -> &Checksum { &self.checksum }
     pub fn as_version(&self) -> &Version { &self.version }
+    pub fn as_packster_version(&self) -> &Version { &self.packster_version }
 
     pub fn to_file_name(&self) -> String {
         format!(
@@ -113,25 +129,56 @@ impl Package {
         )
     }
 
-    //TODO test reciprocity with to_file_name
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Self { //TODO handle error properly
+    //TODO consider converting to From ?
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         lazy_static! {
             static ref PACKAGE_FILENAME_REGEXP: Regex = Regex::new("(?P<identifier>[^_]+)_(?P<version>[^_]+)_(?P<checksum>[^.]+).(?P<packster_version>[^.]+)").unwrap();
         }
-        let filename = path.as_ref().file_stem().unwrap().to_str().unwrap();
-        let captures = PACKAGE_FILENAME_REGEXP.captures(filename).unwrap();
+        let path = path.as_ref();
+        let filename = path.file_stem()
+            .ok_or_else(|| Error::NoFileNameInPath(path.to_path_buf()))?
+            .to_str()
+            .ok_or_else(|| Error::InvalidUtf8Path(path.to_path_buf()))
+        ?;
 
-        let identifier = captures.name("identifier").unwrap().as_str();
-        let version = captures.name("version").unwrap().as_str();
-        let checksum = captures.name("checksum").unwrap().as_str();
-        let packster_version = captures.name("packster_version").unwrap().as_str();
+        let captures = PACKAGE_FILENAME_REGEXP.captures(filename)
+            .ok_or_else(|| Error::WrongFileNameFormat("No match".into(), path.to_path_buf()))
+        ?;
 
-        Package {
-            identifier: Identifier(identifier.to_owned()),
-            version: Version(version.to_owned()),
-            checksum: Checksum::from_str(checksum).unwrap(),
-            packster_version: Version::new(String::from_utf8_lossy(&hex::decode(packster_version).unwrap())) //TODO bug : enforce semver through Version type ( from_str )
-        }
+        let identifier = captures.name("identifier")
+            .ok_or_else(|| Error::WrongFileNameFormat("Identifier missing".into(), path.to_path_buf()))
+            .map(|m| m.as_str())
+            .and_then(Identifier::from_str)
+        ?;
+
+        let version = captures.name("version")
+            .ok_or_else(|| Error::WrongFileNameFormat("Version missing".into(), path.to_path_buf()))
+            .map(|m| m.as_str())
+            .and_then(Version::from_str)
+        ?;
+
+        let checksum = captures.name("checksum")
+            .ok_or_else(|| Error::WrongFileNameFormat("Checksum missing".into(), path.to_path_buf()))
+            .map(|m| m.as_str())
+            .and_then(Checksum::from_str)
+        ?;
+
+        let packster_version = captures.name("packster_version")
+            .ok_or_else(|| Error::WrongFileNameFormat("Packster version missing".into(), path.to_path_buf()))
+            .map(|m| m.as_str())
+            .and_then(|s| hex::decode(s).map_err(Error::from))
+            .and_then(|b| String::from_utf8(b).map_err(Error::from))
+            .and_then(|s| Version::from_str(&s))
+        ?;
+
+        Ok(
+            Package {
+                identifier,
+                version,
+                checksum,
+                packster_version
+            }
+        )
     }
 }
 
@@ -141,7 +188,7 @@ impl Default for Package {
         Package {
             identifier: Identifier(String::from("my-package")),
             version: Version(String::from("0.0.1")),
-            checksum: Checksum::from_str("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad").unwrap(),
+            checksum: Checksum::from_str("d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4").unwrap(),
             packster_version: Version(String::from("0.1.4"))
         }
     }
@@ -201,12 +248,28 @@ impl DeployLocation {
 #[cfg(test)]
 mod test {
     use super::*;
+    pub use pretty_assertions::{assert_eq, assert_ne};
 
     #[test]
-    fn test_extract_checksum_from_path() {
-        let path = Path::new("C:\\Downloads\\static-package-a_0.0.1_ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad.f61f10025ad.packster");
-        let checksum = Package::from_path(path).as_checksum().to_string();
+    fn test_extract_checksum_from_path() -> Result<()> {
+        let path = Path::new("C:\\Downloads\\static-package-a_0.0.1_d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4.302e312e30.packster");
+        let checksum = Package::from_path(path)?.as_checksum().to_string();
 
-        assert_eq!(checksum, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        assert_eq!(checksum, "d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4");
+        Ok(())
+    }
+
+    #[test]
+    fn test_filename_reciprocity() -> Result<()> {
+        let original_package = Package::default();
+        let file_name = original_package.to_file_name();
+        let parsed_package = Package::from_path(file_name)?;
+
+        assert_eq!(original_package.as_identifier(), parsed_package.as_identifier());
+        assert_eq!(original_package.as_checksum(), parsed_package.as_checksum());
+        assert_eq!(original_package.as_version(), parsed_package.as_version());
+        assert_eq!(original_package.as_packster_version(), parsed_package.as_packster_version());
+
+        Ok(())
     }
 }

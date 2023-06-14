@@ -1,3 +1,7 @@
+#![cfg_attr(all(not(debug_assertions), not(test)), deny(warnings))]
+#![forbid(unsafe_code)]
+#![warn(clippy::all)]
+
 use std::println;
 
 use clap::{Parser, Subcommand};
@@ -82,7 +86,7 @@ impl CommandLine {
                         )?
                 ,
                 Command::Undeploy(undeploy_command) =>
-                    Operation::new(UndeployRequest::from(undeploy_command))
+                    Operation::new(UndeployRequest::try_from(undeploy_command)?)
                         .parse_location_lockfile(&StdFileSystem, &Json)?
                         .probe_package_already_deployed_in_location()?
                         .guess_deployment_path()
