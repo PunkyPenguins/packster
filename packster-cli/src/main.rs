@@ -65,7 +65,7 @@ impl CommandLine {
                         .initialize_lockfile(&StdFileSystem, &Json)
                         .map(
                             |op|
-                            println!("Empty deployment created at : {}", op.as_path_location().to_string_lossy())
+                            println!("Empty deployment created at : {}", op.as_location_path().to_string_lossy())
                         )?
                 ,
                 Command::DeployFile(deploy_file_command) =>
@@ -96,7 +96,7 @@ impl CommandLine {
                             println!(
                                 "Deployment {} undeployed from location {}",
                                 operation.as_checksum().to_string(),
-                                operation.as_path_location().to_string_lossy()
+                                operation.as_location_path().to_string_lossy()
                             )
                         )?
                 ,

@@ -76,10 +76,10 @@ impl <S: AsPackage, R>AsPackage for Operation<S, R> {
     fn as_package(&self) -> &Package { self.state.as_package() }
 }
 
-pub trait AsPathLocation {
-    fn as_path_location(&self) -> Absolute<&Path>;
-    fn to_lockfile_location(&self) -> Absolute<PathBuf> {
-        self.as_path_location().join(LOCKFILE_NAME)
+pub trait AsLocationPath {
+    fn as_location_path(&self) -> Absolute<&Path>;
+    fn to_location_lockfile_path(&self) -> Absolute<PathBuf> {
+        self.as_location_path().join(LOCKFILE_NAME)
     }
 }
 

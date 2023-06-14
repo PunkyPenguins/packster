@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{domain::{DeployLocation, Package, Deployment}, port::{Parser, ReadOnlyFileSystem, Digester}, Error, Result, path::Absolute};
 
-use super::{AsPackagePath, AsLocation, AsPackage, AsPathLocation, Operation, AsChecksum};
+use super::{AsPackagePath, AsLocation, AsPackage, AsLocationPath, Operation, AsChecksum};
 
 
 pub struct ParsedPackage<P> {
@@ -39,9 +39,9 @@ pub struct ParsedLocation<S> {
     pub location: DeployLocation
 }
 
-impl <S, R>Operation<S, R> where Self: AsPathLocation {
+impl <S, R>Operation<S, R> where Self: AsLocationPath {
     pub fn parse_location_lockfile<F: ReadOnlyFileSystem, P: Parser>(self, filesystem: &F, parser: &P) -> Result<Operation<ParsedLocation<S>, R>> {
-        let lockfile_path = self.to_lockfile_location();
+        let lockfile_path = self.to_location_lockfile_path();
         let lockfile_content = filesystem.read_to_string(lockfile_path)?;
         Self::ok_with_state(
             self.request,
@@ -133,10 +133,10 @@ impl <S: AsLocation>AsLocation for MatchingChecksum<S> {
 
 pub struct DeploymentPath<S> { pub previous_state: S, pub deployment_path: Absolute<PathBuf> }
 
-impl <S, R> Operation<S, R> where Self: AsChecksum + AsPathLocation {
+impl <S, R> Operation<S, R> where Self: AsChecksum + AsLocationPath {
     pub fn guess_deployment_path(self) -> Operation<DeploymentPath<S>, R> {
         let checksum_string = self.as_checksum().to_string();
-        let deployment_path = self.as_path_location().join(checksum_string);
+        let deployment_path = self.as_location_path().join(checksum_string);
         Self::with_state(
             self.request,
             DeploymentPath {
