@@ -1,0 +1,107 @@
+name: Packaging
+env:
+  CARGO_TERM_COLOR: always
+on:
+  push:
+    branches:
+    - 'main'
+    paths:
+    - '.github/workflows/release.yaml'
+    - 'packster-cli/**'
+    - 'packster-core/**'
+    - 'packster-infrastructure/**'
+    - 'Cargo.lock'
+jobs:
+   prepare:
+    name: State version and file names
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: cargo install cargo-get
+    - id: version
+      run: echo "PACKSTER_VERSION=$(cargo get --root packster-cli version)" >> "$GITHUB_OUTPUT"
+    - uses: mukunku/tag-exists-action@v1.2.0
+      id: tag_exists
+      with:
+        tag: '${{ steps.version.outputs.PACKSTER_VERSION }}'
+    - id: package_revision_name
+      run: echo "PACKSTER_REVISION_NAME=packster-cli-${{ steps.version.outputs.PACKSTER_VERSION }}-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+    - id: package_release_name
+      run: echo "PACKSTER_RELEASE_NAME=packster-cli-${{ steps.version.outputs.PACKSTER_VERSION }}" >> "$GITHUB_OUTPUT"
+    outputs:
+      PACKSTER_VERSION: ${{ steps.version.outputs.PACKSTER_VERSION }}
+      PACKSTER_REVISION_NAME: ${{ steps.package_revision_name.outputs.PACKSTER_REVISION_NAME }}
+      PACKSTER_RELEASE_NAME: ${{ steps.package_release_name.outputs.PACKSTER_RELEASE_NAME }}
+      TAG_EXISTS: ${{ steps.tag_exists.outputs.exists }}
+
+   build-windows:
+    name: Build ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-windows-x86_64
+    needs: [prepare]
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: rustup update --no-self-update stable-msvc && rustup default stable-msvc
+    - run: cargo build --release --locked
+    - run: mv target/release/packster-cli.exe ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-windows-x86_64.exe
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-windows-x86_64
+        path: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-windows-x86_64.exe
+
+   build-linux:
+    name: Build ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-linux-x86_64
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: rustup update --no-self-update stable && rustup default stable
+    - run: cargo build --release --locked
+    - run: mv target/release/packster-cli ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-linux-x86_64
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-linux-x86_64
+        path: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-linux-x86_64
+
+   build-macos:
+    name: Build ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-macos-x86_64
+    needs: [prepare]
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: rustup update --no-self-update stable && rustup default stable
+    - run: cargo build --release --locked
+    - run: mv target/release/packster-cli ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-macos-x86_64
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-macos-x86_64
+        path: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-macos-x86_64
+
+   release:
+    name: Release if new version
+    needs: [prepare, build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: needs.prepare.outputs.TAG_EXISTS == 'false'
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-linux-x86_64
+    - run: mv ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-linux-x86_64 ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-linux-x86_64
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-macos-x86_64
+    - run: mv ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-macos-x86_64 ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-macos-x86_64
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-windows-x86_64
+    - run: mv ${{ needs.prepare.outputs.PACKSTER_REVISION_NAME }}-windows-x86_64.exe ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-windows-x86_64.exe
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: ${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-linux-x86_64,${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-macos-x86_64,${{ needs.prepare.outputs.PACKSTER_RELEASE_NAME }}-windows-x86_64.exe
+        commit: ${{ github.sha }}
+        tag: ${{ needs.prepare.outputs.PACKSTER_VERSION }}
+        makeLatest: true
+        generateReleaseNotes: true
+
+

@@ -59,3 +59,10 @@ Test actions locally with docker : https://github.com/nektos/act
 How cargo's doing : https://github.com/rust-lang/cargo/blob/master/.github/workflows/main.yml
 
 https://adamtheautomator.com/github-actions-matrix/
+
+
+https://crates.io/crates/cargo-get
+
+
+https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
+https://www.macstadium.com/blog/sharing-variables-between-jobs-in-github-actions
