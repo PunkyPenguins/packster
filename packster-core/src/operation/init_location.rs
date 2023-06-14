@@ -1,7 +1,7 @@
 use std::path::{PathBuf, Path};
 
 use crate::{Result, Error, path::Absolute, port::{ FileSystem, Serializer }, domain::DeployLocation};
-use super::{Operation, New, AsPathLocation};
+use super::{Operation, New, AsLocationPath};
 
 pub struct InitLocationRequest {
     location_directory: Absolute<PathBuf>
@@ -16,8 +16,8 @@ impl InitLocationRequest {
 
 pub type InitLocationOperation<S> = Operation<S, InitLocationRequest>;
 
-impl <S>AsPathLocation for InitLocationOperation<S> {
-    fn as_path_location(&self) -> Absolute<&Path> {
+impl <S>AsLocationPath for InitLocationOperation<S> {
+    fn as_location_path(&self) -> Absolute<&Path> {
         self.request.location_directory.as_absolute_path()
     }
 }
@@ -26,7 +26,7 @@ pub struct LocationInitialized;
 
 impl InitLocationOperation<New> {
     pub fn initialize_lockfile<F: FileSystem, S: Serializer>(self, filesystem: &F, serializer: &S) -> Result<InitLocationOperation<LocationInitialized>> {
-        let lockfile_path = self.to_lockfile_location();
+        let lockfile_path = self.to_location_lockfile_path();
 
         ensure_that_no_lockfile_is_present(&lockfile_path, filesystem)?;
 

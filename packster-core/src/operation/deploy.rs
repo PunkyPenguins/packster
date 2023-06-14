@@ -6,7 +6,7 @@ use super::{
     Operation,
     New,
     AsPackagePath,
-    AsPathLocation,
+    AsLocationPath,
     ParsedPackage,
     ParsedLocation,
     NotYetDeployed,
@@ -35,26 +35,26 @@ impl <S>AsPackagePath for DeployOperation<S> {
     fn as_package_path(&self) -> Absolute<&Path> { self.request.package_path.as_absolute_path() }
 }
 
-impl <S>AsPathLocation for DeployOperation<S> {
-    fn as_path_location(&self) -> Absolute<&Path> { self.request.location_path.as_absolute_path() }
+impl <S>AsLocationPath for DeployOperation<S> {
+    fn as_location_path(&self) -> Absolute<&Path> { self.request.location_path.as_absolute_path() }
 }
 
 impl <S: AsPackage>AsChecksum for DeployOperation<S> {
     fn as_checksum(&self) -> &Checksum { self.state.as_package().as_checksum() }
 }
 
-pub type ValidState = DeploymentPath<MatchingChecksum<NotYetDeployed<ParsedLocation<ParsedPackage<New>>>>>;
+pub type DeployValidState = DeploymentPath<MatchingChecksum<NotYetDeployed<ParsedLocation<ParsedPackage<New>>>>>;
 
-impl ValidState {
+impl DeployValidState {
     fn as_mut_location(&mut self) -> &mut DeployLocation { &mut self.previous_state.previous_state.previous_state.location }
 }
 
 pub struct ExtractedPackage {
-    previous_state: ValidState
+    previous_state: DeployValidState
 }
 
 //An emerging good practise here : keep read operations as generic as possible and write operation as specific as possible
-impl DeployOperation<ValidState> {
+impl DeployOperation<DeployValidState> {
     pub fn extract_package<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<DeployOperation<ExtractedPackage>> {
         archiver.extract(
             filesystem,
@@ -65,13 +65,13 @@ impl DeployOperation<ValidState> {
     }
 }
 
-pub struct LockfileUpdated {
+pub struct DeployedDeployment {
     previous_state: ExtractedPackage,
     deployment: Deployment
 }
 
 impl DeployOperation<ExtractedPackage> {
-    pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(mut self, filesystem: &F, serializer: &Sr) -> Result<DeployOperation<LockfileUpdated>> {
+    pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(mut self, filesystem: &F, serializer: &Sr) -> Result<DeployOperation<DeployedDeployment>> {
         let package = self.state.previous_state.as_package();
         let deployment: Deployment = Deployment::new(package.clone());
 
@@ -79,14 +79,14 @@ impl DeployOperation<ExtractedPackage> {
         location.add_deployment(deployment.clone());
 
         let deploy_location_file_content = serializer.serialize(&location)?;
-        let lockfile_location = self.to_lockfile_location();
+        let lockfile_location = self.to_location_lockfile_path();
         filesystem.write_all(lockfile_location, deploy_location_file_content.as_bytes())?;
 
-        Self::ok_with_state(self.request, LockfileUpdated { previous_state: self.state, deployment })
+        Self::ok_with_state(self.request, DeployedDeployment { previous_state: self.state, deployment })
     }
 }
 
-impl DeployOperation<LockfileUpdated> {
+impl DeployOperation<DeployedDeployment> {
     pub fn as_deploy_path(&self) -> Absolute<&Path> { self.state.previous_state.previous_state.deployment_path.as_absolute_path() }
     pub fn as_location(&self) -> &DeployLocation { self.state.previous_state.previous_state.as_location() }
     pub fn as_deployment(&self) -> &Deployment { &self.state.deployment }

@@ -41,3 +41,21 @@ https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527
 
 
 
+## About github actions
+
+https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release
+
+### Interesting actions
+
+https://github.com/marketplace
+https://github.com/marketplace/actions/upload-a-build-artifact
+https://github.com/marketplace/actions/github-release
+https://github.com/marketplace/actions/upload-files-to-a-github-release
+
+
+
+Test actions locally with docker : https://github.com/nektos/act
+How cargo's doing : https://github.com/rust-lang/cargo/blob/master/.github/workflows/main.yml
+
+https://adamtheautomator.com/github-actions-matrix/
