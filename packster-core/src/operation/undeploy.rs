@@ -2,7 +2,7 @@ use std::path::{PathBuf, Path};
 
 use crate::{domain::{Checksum, Deployment, DeployLocation}, path::Absolute, port::FileSystem, Result};
 
-use super::{Operation, AsLocationPath, AsChecksum, AlreadyDeployed, ParsedLocation, New, DeploymentPath, UpdatedDeployLocation, PersistedDeployLocation};
+use super::{Operation, AsLocationPath, AsChecksum, AlreadyDeployed, ParsedLocation, New, DeploymentPath, PersistedDeployLocation};
 
 pub struct UndeployRequest {
     checksum: Checksum,
@@ -32,18 +32,18 @@ impl UndeployOperation<UndeployValidState> {
         &mut self.state.previous_state.previous_state.location
     }
 
-    pub fn remove_deployment_from_location(mut self) -> UndeployOperation<UpdatedDeployLocation<UndeployValidState>> {
+    pub fn remove_deployment_from_location(mut self) -> UndeployOperation<UndeployValidState> {
         let checksum = self.as_checksum().clone();
         let location = self.as_mut_location();
         location.remove_deployment(&checksum);
 
-        Self::with_state(self.request, UpdatedDeployLocation { previous_state: self.state })
+        Self::with_state(self.request, self.state)
     }
 }
 
-impl AsRef<DeployLocation> for UndeployOperation<UpdatedDeployLocation<UndeployValidState>> {
+impl AsRef<DeployLocation> for UndeployOperation<UndeployValidState> {
     fn as_ref(&self) -> &DeployLocation {
-        &self.state.previous_state.previous_state.previous_state.location
+        &self.state.previous_state.previous_state.location
     }
 }
 

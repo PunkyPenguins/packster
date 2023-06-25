@@ -155,15 +155,14 @@ impl <S: AsLocation>AsLocation for DeploymentPath<S> {
     fn as_location(&self) -> &DeployLocation { self.previous_state.as_location() }
 }
 
-pub struct UpdatedDeployLocation<P> { pub previous_state: P }
 pub struct PersistedDeployLocation<P> { pub previous_state: P }
 
-impl <P, R> Operation<UpdatedDeployLocation<P>, R> where Self: AsLocationPath + AsRef<DeployLocation> {
-    pub fn persist_location_lockfile<F: FileSystem, Sr: Serializer> (self, filesystem: &F, serializer: &Sr) -> Result<Operation<PersistedDeployLocation<P>, R>> {
+impl <S, R> Operation<S, R> where Self: AsLocationPath + AsRef<DeployLocation> {
+    pub fn persist_location_lockfile<F: FileSystem, Sr: Serializer> (self, filesystem: &F, serializer: &Sr) -> Result<Operation<PersistedDeployLocation<S>, R>> {
         let lockfile_location = self.to_location_lockfile_path();
         let location = self.as_ref();
         let deploy_location_file_content = serializer.serialize(location)?;
         filesystem.write_all(lockfile_location, deploy_location_file_content.as_bytes())?;
-        Self::ok_with_state(self.request, PersistedDeployLocation { previous_state: self.state.previous_state })
+        Self::ok_with_state(self.request, PersistedDeployLocation { previous_state: self.state })
     }
 }

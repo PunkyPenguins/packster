@@ -14,7 +14,7 @@ use super::{
     DeploymentPath,
     AsChecksum,
     AsPackage,
-    UpdatedDeployLocation, PersistedDeployLocation
+    PersistedDeployLocation
 };
 
 pub struct DeployRequest {
@@ -66,7 +66,7 @@ impl DeployOperation<DeployValidState> {
     }
 }
 
-pub struct DeployedDeployment {
+pub struct LocationWithNewDeployment {
     previous_state: ExtractedPackage,
     deployment: Deployment
 }
@@ -76,7 +76,7 @@ impl DeployOperation<ExtractedPackage> {
         &mut self.state.previous_state.previous_state.previous_state.previous_state.location
     }
 
-    pub fn add_deployment_to_location(mut self) -> DeployOperation<UpdatedDeployLocation<DeployedDeployment>> {
+    pub fn add_deployment_to_location(mut self) -> DeployOperation<LocationWithNewDeployment> {
         let package = self.state.previous_state.as_package();
         let deployment: Deployment = Deployment::new(package.clone());
 
@@ -85,20 +85,18 @@ impl DeployOperation<ExtractedPackage> {
 
         Self::with_state(
             self.request,
-            UpdatedDeployLocation {
-                previous_state: DeployedDeployment { previous_state: self.state, deployment }
-            }
+            LocationWithNewDeployment { previous_state: self.state, deployment }
         )
     }
 }
 
-impl AsRef<DeployLocation> for DeployOperation<UpdatedDeployLocation<DeployedDeployment>> {
+impl AsRef<DeployLocation> for DeployOperation<LocationWithNewDeployment> {
     fn as_ref(&self) -> &DeployLocation {
-        &self.state.previous_state.previous_state.previous_state.previous_state.previous_state.previous_state.location
+        &self.state.previous_state.previous_state.previous_state.previous_state.previous_state.location
     }
 }
 
-impl DeployOperation<PersistedDeployLocation<DeployedDeployment>> {
+impl DeployOperation<PersistedDeployLocation<LocationWithNewDeployment>> {
     pub fn as_deploy_path(&self) -> Absolute<&Path> { self.state.previous_state.previous_state.previous_state.deployment_path.as_absolute_path() }
     pub fn as_deployment(&self) -> &Deployment { &self.state.previous_state.deployment }
     pub fn as_package(&self) -> &Package { self.state.previous_state.previous_state.previous_state.as_package() }
