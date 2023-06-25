@@ -6,10 +6,9 @@ use crate::parse::try_from_current_dir;
 
 #[derive(Args)]
 pub struct UndeployCommand {
+    pub checksum: String,
     #[arg(value_parser=try_from_current_dir)]
     pub location_directory: Absolute<PathBuf>,
-    #[arg()]
-    pub checksum: String,
 }
 
 impl TryFrom<UndeployCommand> for UndeployRequest {

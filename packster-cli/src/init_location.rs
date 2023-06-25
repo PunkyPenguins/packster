@@ -5,7 +5,7 @@ use crate::parse::try_from_current_dir;
 
 #[derive(Args)]
 pub struct InitLocationCommand {
-    #[arg(value_parser=try_from_current_dir)]
+    #[arg(value_parser=try_from_current_dir, default_value=".")]
     pub location_directory: Absolute<PathBuf>,
 }
 

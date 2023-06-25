@@ -4,10 +4,10 @@ use crate::{
         operation::{AsChecksum, Operation},
         path::Absolute,
     },
-    packaging::application::{AsLocation, AsLocationPath, AsPackage},
+    packaging::application::AsLocationPath,
     Error, Result,
 };
-use super::{DeployLocation, Deployment, Package};
+use super::{AsLocation, AsPackage, DeployLocation, Deployment, Package};
 
 pub struct NotYetDeployed<S> {
     pub previous_state: S,

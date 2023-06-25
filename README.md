@@ -43,9 +43,14 @@ General help:
 cargo run -- --help
 ```
 
+Scope specific help ( by exemple `project` scope ):
+```sh
+cargo run -- project --help
+```
+
 Command specific help ( by exemple `pack` command ):
 ```sh
-cargo run -- pack --help
+cargo run -- project pack --help
 ```
 
 ### Create a package
@@ -62,7 +67,7 @@ version = "0.0.1"
 Then create the package file with :
 
 ```sh
-cargo run -- pack --project-workspace myproject --package-output-directory .
+cargo run -- project pack myproject
 ```
 
 You'd then see in your current working directory the package package file as `my-package_0.0.1_b7112762ff233f95979dd390197187a66ac164a808628228ef41b43042dc582d.302e312e30.packster`
@@ -73,13 +78,25 @@ Create an empty directory ( _let's say mylocation_ )
 
 Then initialize a location inside with :
 ```sh
-cargo run -- init-location --location-directory mylocation
+cargo run -- location init mylocation
 ```
 
 You'd then see a lockfile named `packster.lock` inside `mylocation`
 
+### Deploy a Package in a Location
 
+```sh
+cargo run -- package deploy my-package_0.0.1_b7112762ff233f95979dd390197187a66ac164a808628228ef41b43042dc582d.302e312e30.packster mylocation
+```
 
-Deployment
-Source
-Dependency
+### Show packages in a location
+
+```sh
+cargo run -- location show mylocation
+```
+
+### Undeploy a Package in a location
+
+```sh
+cargo run -- location undeploy b7112762ff233f95979dd390197187a66ac164a808628228ef41b43042dc582d mylocation
+```
