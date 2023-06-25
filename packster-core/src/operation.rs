@@ -1,8 +1,11 @@
 #![allow(dead_code)]
 use std::path::{Path, PathBuf};
 
-mod generic;
-pub use generic::*;
+mod generic_domain;
+pub use generic_domain::*;
+
+mod generic_application;
+pub use generic_application::*;
 
 mod pack;
 pub use pack::*;
