@@ -1,6 +1,6 @@
 use std::{io::{self, Read}};
 use sha2::{Sha256, Digest};
-use packster_core::{port::Digester, domain::Checksum};
+use packster_core::{port::Digester, entity::Checksum};
 use crate::{ Result, Error };
 
 #[derive(Default)]

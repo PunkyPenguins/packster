@@ -11,7 +11,7 @@ use packster_core::{
     Result,
     Error,
     operation::{PackRequest, Operation, New, InitLocationRequest, DeployRequest, UndeployRequest},
-    path::Absolute, LOCKFILE_NAME, domain::Checksum
+    path::Absolute, LOCKFILE_NAME, entity::Checksum
 };
 
 use packster_infrastructure::{

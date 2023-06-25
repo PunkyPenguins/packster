@@ -1,6 +1,6 @@
 use std::path::{PathBuf, Path};
 
-use crate::{domain::{Checksum, Deployment, DeployLocation}, path::Absolute, port::FileSystem, Result};
+use crate::{entity::{Checksum, Deployment, DeployLocation}, path::Absolute, port::FileSystem, Result};
 
 use super::{Operation, AsLocationPath, AsChecksum, AlreadyDeployed, ParsedLocation, New, DeploymentPath, PersistedDeployLocation};
 

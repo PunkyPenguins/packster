@@ -4,7 +4,7 @@ use crate::{
     Result,
     port::{ReadOnlyFileSystem, Parser, FileSystem, Archiver, Digester, UniqueIdentifierGenerator},
     path::Absolute,
-    domain::{Project, Package, Version, Checksum},
+    entity::{Project, Package, Version, Checksum},
     PACKAGE_EXTENSION, PROJECT_MANIFEST_NAME,
 };
 

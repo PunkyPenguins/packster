@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use crate::{
     port::{FileSystem, Archiver},
-    domain::{Package, Deployment, DeployLocation, Checksum},
+    entity::{Package, Deployment, DeployLocation, Checksum},
     Result,
     path::Absolute
 };

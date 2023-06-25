@@ -1,6 +1,6 @@
 use std::path::{PathBuf, Path};
 
-use crate::{Result, Error, path::Absolute, port::{ FileSystem, Serializer }, domain::DeployLocation};
+use crate::{Result, Error, path::Absolute, port::{ FileSystem, Serializer }, entity::DeployLocation};
 use super::{Operation, New, AsLocationPath};
 
 pub struct InitLocationRequest {

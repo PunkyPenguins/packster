@@ -13,4 +13,4 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 pub mod path;
 pub mod port;
 pub mod operation; //applicative outward API
-pub mod domain;
+pub mod entity;

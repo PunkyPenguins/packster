@@ -22,7 +22,7 @@ pub use undeploy::*;
 mod show_location;
 pub use show_location::*;
 
-use crate::{path::Absolute, LOCKFILE_NAME, domain::{DeployLocation, Package, Checksum}, Result};
+use crate::{path::Absolute, LOCKFILE_NAME, entity::{DeployLocation, Package, Checksum}, Result};
 
 pub struct Operation<S, R>{
     request: R,

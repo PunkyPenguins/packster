@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{domain::{DeployLocation, Package, Deployment}, Error, Result, path::Absolute};
+use crate::{entity::{DeployLocation, Package, Deployment}, Error, Result, path::Absolute};
 
 use super::{ AsLocation, AsPackage, AsLocationPath, Operation, AsChecksum};
 

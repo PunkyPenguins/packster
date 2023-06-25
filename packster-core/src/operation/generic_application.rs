@@ -1,4 +1,4 @@
-use crate::{domain::{DeployLocation, Package}, port::{Serializer, Parser, FileSystem, ReadOnlyFileSystem, Digester}, Result, Error};
+use crate::{entity::{DeployLocation, Package}, port::{Serializer, Parser, FileSystem, ReadOnlyFileSystem, Digester}, Result, Error};
 use super::{Operation, AsLocationPath, AsPackagePath, AsPackage, AsLocation};
 
 pub struct ParsedPackage<P> {
