@@ -1,7 +1,6 @@
-use packster_core::port::UniqueIdentifierGenerator;
-use unique_id::Generator;
 use unique_id::string::StringGenerator;
-
+use unique_id::Generator;
+use packster_core::application::port::UniqueIdentifierGenerator;
 
 #[derive(Default)]
 pub struct UniqidIdentifierGenerator(StringGenerator);
@@ -12,7 +11,6 @@ impl UniqueIdentifierGenerator for UniqidIdentifierGenerator {
         self.0.next_id()
     }
 }
-
 
 #[cfg(test)]
 mod test {

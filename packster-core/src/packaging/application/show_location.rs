@@ -1,7 +1,5 @@
 use std::path::{PathBuf, Path};
-
-use crate::path::Absolute;
-
+use crate::application::path::Absolute;
 use super::{AsLocationPath, Operation};
 
 pub struct ShowLocationRequest {
@@ -15,5 +13,5 @@ impl ShowLocationRequest {
 }
 
 impl <S>AsLocationPath for Operation<S, ShowLocationRequest> {
-    fn as_location_path(&self) -> Absolute<&Path> { self.request.location_directory.as_absolute_path() }
+    fn as_location_path(&self) -> Absolute<&Path> { self.as_request().location_directory.as_absolute_path() }
 }

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use clap::Args;
-use packster_core::{path::Absolute, operation::ShowLocationRequest};
+use packster_core::{application::path::Absolute, packaging::application::ShowLocationRequest};
 use crate::parse::try_from_current_dir;
 
 

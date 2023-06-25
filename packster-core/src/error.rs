@@ -2,7 +2,7 @@ use std::{fmt,error, path::PathBuf, string::FromUtf8Error};
 
 use hex::FromHexError;
 
-use crate::path::Absolute;
+use crate::application::path::Absolute;
 
 #[derive(Debug)]
 pub enum Error {

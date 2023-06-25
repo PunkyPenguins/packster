@@ -1,13 +1,12 @@
 use std::path::PathBuf;
-
 use clap::Args;
-use packster_core::{operation::InitLocationRequest, path::Absolute};
+use packster_core::{application::path::Absolute, packaging::application::InitLocationRequest};
 use crate::parse::try_from_current_dir;
 
 #[derive(Args)]
 pub struct InitLocationCommand {
     #[arg(value_parser=try_from_current_dir)]
-    pub location_directory: Absolute<PathBuf>
+    pub location_directory: Absolute<PathBuf>,
 }
 
 impl From<InitLocationCommand> for InitLocationRequest {

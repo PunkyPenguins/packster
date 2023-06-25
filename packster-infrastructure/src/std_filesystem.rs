@@ -1,12 +1,14 @@
 use std::{
-    path::Path,
+    fs::{self, File},
     io::{Read, Write},
-    fs::{self, File}
+    path::Path,
 };
 use walkdir::WalkDir;
-
-use packster_core::{port::{ReadOnlyFileSystem, FileSystem, DirEntry, PathExt }, path::Absolute};
-use crate::{Result, Error};
+use packster_core::application::{
+    path::Absolute,
+    port::{DirEntry, FileSystem, PathExt, ReadOnlyFileSystem},
+};
+use crate::{Error, Result};
 
 pub struct StdFileSystem;
 
@@ -28,34 +30,30 @@ impl ReadOnlyFileSystem for StdFileSystem {
         Ok(fs::read_to_string(path).map_err(Error::from)?)
     }
 
-    fn open_read<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
+    fn open_read<P: AsRef<Path>>(
+        &self,
+        path: P,
+    ) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
         Ok(Box::new(File::open(path).map_err(Error::from)?))
     }
 
-    fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
-        Box::new(
-            WalkDir::new(target_path)
-                .into_iter()
-                .map(|entry|
+    fn walk<'a>(
+        &'a self,
+        target_path: &'a Path,
+    ) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
+        Box::new(WalkDir::new(target_path).into_iter().map(|entry| {
+            entry
+                .and_then(|entry| {
                     entry
-                    .and_then(|entry|
-                        entry.metadata()
-                            .map(|metadata|
-                                (metadata.len(), entry.path().to_normalized_path())
-                            )
-                    )
-                    .map_err(|e| Error::from(e).into())
-                    .and_then(|(len, normalized_path)|
-                        Absolute::try_absolute(normalized_path)
-                            .map(|absolute_path|
-                                 DirEntry::new(
-                                    absolute_path,
-                                    len
-                                )
-                            )
-                    )
-                )
-        )
+                        .metadata()
+                        .map(|metadata| (metadata.len(), entry.path().to_normalized_path()))
+                })
+                .map_err(|e| Error::from(e).into())
+                .and_then(|(len, normalized_path)| {
+                    Absolute::try_absolute(normalized_path)
+                        .map(|absolute_path| DirEntry::new(absolute_path, len))
+                })
+        }))
     }
 
     fn file_size<P: AsRef<Path>>(&self, path: P) -> Result<u64> {
@@ -70,7 +68,9 @@ impl FileSystem for StdFileSystem {
     }
 
     fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        fs::create_dir(path).map_err(Error::from).map_err(Error::from)?;
+        fs::create_dir(path)
+            .map_err(Error::from)
+            .map_err(Error::from)?;
         Ok(())
     }
 
@@ -85,10 +85,16 @@ impl FileSystem for StdFileSystem {
     }
 
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize> {
-        Ok(File::open(path).map_err(Error::from)?.write(buf.as_ref()).map_err(Error::from)?)
+        Ok(File::open(path)
+            .map_err(Error::from)?
+            .write(buf.as_ref())
+            .map_err(Error::from)?)
     }
 
-    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
+    fn open_write<'a, P: AsRef<Path>>(
+        &'a self,
+        path: P,
+    ) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
         Ok(Box::new(File::create(path).map_err(Error::from)?))
     }
 

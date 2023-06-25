@@ -5,7 +5,7 @@
 use std::println;
 
 use clap::{Parser, Subcommand};
-use packster_core::{operation::*, Result};
+use packster_core::{Result, application::operation::{Operation, AsChecksum}, packaging::application::*};
 use packster_infrastructure::{
     StdFileSystem,
     Toml,
@@ -23,7 +23,6 @@ mod undeploy;
 mod show_location;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 
 fn main() {
     std::process::exit(
@@ -57,7 +56,7 @@ impl CommandLine {
                         .finalize(&StdFileSystem, CRATE_VERSION)
                         .map(
                             |operation|
-                                println!("Package created : {}", operation.get_state().to_file_name())
+                                println!("Package created : {}", operation.as_state().to_file_name())
                         )?
                 ,
                 Command::InitLocation(init_location_command) =>

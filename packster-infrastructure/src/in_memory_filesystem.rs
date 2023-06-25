@@ -1,27 +1,19 @@
 use std::{
     collections::BTreeMap,
-    sync::RwLock,
+    io::{self, Cursor, Read, Write},
     path::{Path, PathBuf},
-    io::{self, Cursor, Read, Write}
+    sync::RwLock,
 };
-
-use packster_core::{
-    port::{
-        PathExt,
-        FileSystem,
-        ReadOnlyFileSystem,
-        DirEntry,
-        Archiver
-    },
-    path::{ NormalizedPathBuf, Absolute }
+use packster_core::application::{
+    path::{Absolute, NormalizedPathBuf},
+    port::{Archiver, DirEntry, FileSystem, PathExt, ReadOnlyFileSystem},
 };
-use crate::{Result, Error};
-
+use crate::{Error, Result};
 
 #[derive(Clone, Debug)]
 pub enum Node {
     File(Vec<u8>),
-    Directory
+    Directory,
 }
 
 /**
@@ -39,12 +31,21 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPathBuf::from(path)).is_some()
+            self.0
+                .read()
+                .unwrap()
+                .get(&NormalizedPathBuf::from(path))
+                .is_some()
         }
     }
 
     fn is_file<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.0.read().unwrap().get(&NormalizedPathBuf::from(path.as_ref())).filter(|node| matches!(node, Node::File(_))).is_some()
+        self.0
+            .read()
+            .unwrap()
+            .get(&NormalizedPathBuf::from(path.as_ref()))
+            .filter(|node| matches!(node, Node::File(_)))
+            .is_some()
     }
 
     fn is_directory<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -52,47 +53,80 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if path == Path::new("") || path == Path::new("//") || path == Path::new("C:") {
             true
         } else {
-            self.0.read().unwrap().get(&NormalizedPathBuf::from(path)).filter(|node| matches!(node, Node::Directory)).is_some()
+            self.0
+                .read()
+                .unwrap()
+                .get(&NormalizedPathBuf::from(path))
+                .filter(|node| matches!(node, Node::Directory))
+                .is_some()
         }
     }
 
     fn read_to_string<P: AsRef<Path>>(&self, path: P) -> Result<String> {
-        if ! self.exists(path.as_ref()) { panic!("read_to_string: Path not found ! {:?}", path.as_ref()); }
-        if ! self.is_file(path.as_ref()) { panic!("read_to_string! Path is not a file ! {:?}", path.as_ref()); }
+        if !self.exists(path.as_ref()) {
+            panic!("read_to_string: Path not found ! {:?}", path.as_ref());
+        }
+        if !self.is_file(path.as_ref()) {
+            panic!("read_to_string! Path is not a file ! {:?}", path.as_ref());
+        }
 
-        self.0.read().unwrap()
+        self.0
+            .read()
+            .unwrap()
             .get(&NormalizedPathBuf::from(path.as_ref()))
             .map(|node| match node {
                 Node::File(content) => Ok(String::from_utf8(content.to_vec()).unwrap()),
-                _ => { panic!("Path is not a file {:?}", path.as_ref()); }
-            }).unwrap()
+                _ => {
+                    panic!("Path is not a file {:?}", path.as_ref());
+                }
+            })
+            .unwrap()
     }
 
-    fn open_read<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
-        if ! self.exists(path.as_ref()) { panic!("open_read: Path not found ! {:?}", path.as_ref()); }
-        if ! self.is_file(path.as_ref()) { panic!("open_read: Path is not a file ! {:?}", path.as_ref()); }
+    fn open_read<P: AsRef<Path>>(
+        &self,
+        path: P,
+    ) -> packster_core::Result<Box<dyn Read + Send + Sync>> {
+        if !self.exists(path.as_ref()) {
+            panic!("open_read: Path not found ! {:?}", path.as_ref());
+        }
+        if !self.is_file(path.as_ref()) {
+            panic!("open_read: Path is not a file ! {:?}", path.as_ref());
+        }
 
-        self.0.read().unwrap()
+        self.0
+            .read()
+            .unwrap()
             .get(&NormalizedPathBuf::from(path.as_ref()))
             .map(|node| match node {
-                Node::File(content) => Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read + Send + Sync>),
-                _ => { panic!("Path is not a file {:?}", path.as_ref()); }
-            }).unwrap()
+                Node::File(content) => {
+                    Ok(Box::new(Cursor::new(content.to_vec())) as Box<dyn Read + Send + Sync>)
+                }
+                _ => {
+                    panic!("Path is not a file {:?}", path.as_ref());
+                }
+            })
+            .unwrap()
     }
 
-    fn walk<'a>(&'a self, target_path: &'a Path) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
+    fn walk<'a>(
+        &'a self,
+        target_path: &'a Path,
+    ) -> Box<dyn Iterator<Item = Result<DirEntry>> + 'a> {
         let normalized_target_path = NormalizedPathBuf::from(target_path);
-        let buf : Vec<_> = self.0.read()
+        let buf: Vec<_> = self
+            .0
+            .read()
             .unwrap()
             .iter()
-            .filter(move |(node_path, _)|
+            .filter(move |(node_path, _)| {
                 normalized_target_path.as_ref().is_ancestor_of(*node_path)
-            ).map(|(node_path, _)|
+            })
+            .map(|(node_path, _)| {
                 self.file_size(node_path)
-                    .map(|size|
-                        DirEntry::new(Absolute::assume_absolute(node_path.clone()), size)
-                    )
-            ).collect();
+                    .map(|size| DirEntry::new(Absolute::assume_absolute(node_path.clone()), size))
+            })
+            .collect();
 
         Box::new(buf.into_iter())
     }
@@ -102,7 +136,9 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
         if self.is_directory(&path) {
             Ok(0)
         } else {
-            self.open_read(&path)?.read_to_end(&mut buffer).map_err(Error::from)?;
+            self.open_read(&path)?
+                .read_to_end(&mut buffer)
+                .map_err(Error::from)?;
             Ok(buffer.len() as u64)
         }
     }
@@ -110,36 +146,57 @@ impl ReadOnlyFileSystem for InMemoryFileSystem {
 
 impl FileSystem for InMemoryFileSystem {
     fn create<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if self.exists(path.as_ref()) { panic!("create: Path already exists ! {:?}", path.as_ref()); }
+        if self.exists(path.as_ref()) {
+            panic!("create: Path already exists ! {:?}", path.as_ref());
+        }
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("create: Parent is not a directory ! {parent_path:?}"); }
+            if !self.is_directory(parent_path) {
+                panic!("create: Parent is not a directory ! {parent_path:?}");
+            }
         }
 
-        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::File(Vec::new()));
+        self.0.write().unwrap().insert(
+            NormalizedPathBuf::from(path.as_ref()),
+            Node::File(Vec::new()),
+        );
         Ok(())
     }
 
     fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if self.exists(path.as_ref()) { panic!("create_dir: Path already exists ! {:?}", path.as_ref()); }
+        if self.exists(path.as_ref()) {
+            panic!("create_dir: Path already exists ! {:?}", path.as_ref());
+        }
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("create_dir: Parent is not a directory ! {parent_path:?}"); }
+            if !self.is_directory(parent_path) {
+                panic!("create_dir: Parent is not a directory ! {parent_path:?}");
+            }
         }
 
-        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::Directory);
+        self.0
+            .write()
+            .unwrap()
+            .insert(NormalizedPathBuf::from(path.as_ref()), Node::Directory);
         Ok(())
     }
 
     fn write_all<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<()> {
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("write_all: Parent is not a directory ! {parent_path:?}"); }
+            if !self.is_directory(parent_path) {
+                panic!("write_all: Parent is not a directory ! {parent_path:?}");
+            }
         }
 
-        self.0.write().unwrap().insert(NormalizedPathBuf::from(path.as_ref()), Node::File(buf.as_ref().to_vec()));
+        self.0.write().unwrap().insert(
+            NormalizedPathBuf::from(path.as_ref()),
+            Node::File(buf.as_ref().to_vec()),
+        );
         Ok(())
     }
 
     fn rename<P: AsRef<Path>>(&self, source: P, destination: P) -> Result<()> {
-        if ! self.exists(source.as_ref()) { panic!("rename: Path not found {:?}", source.as_ref()); }
+        if !self.exists(source.as_ref()) {
+            panic!("rename: Path not found {:?}", source.as_ref());
+        }
         let source_path = NormalizedPathBuf::from(source.as_ref());
         let destination_path = NormalizedPathBuf::from(destination.as_ref());
         let node = { self.0.write().unwrap().remove(&source_path).unwrap() };
@@ -150,47 +207,55 @@ impl FileSystem for InMemoryFileSystem {
 
     fn append<P: AsRef<Path>, B: AsRef<[u8]>>(&self, path: P, buf: B) -> Result<usize> {
         if let Some(parent_path) = path.as_ref().parent() {
-            if ! self.is_directory(parent_path) { panic!("append: Parent is not a directory ! {parent_path:?}"); }
+            if !self.is_directory(parent_path) {
+                panic!("append: Parent is not a directory ! {parent_path:?}");
+            }
         }
 
         let len = buf.as_ref().len();
-        self.0.write()
+        self.0
+            .write()
             .unwrap()
             .entry(NormalizedPathBuf::from(path.as_ref()))
-            .and_modify(|node|
+            .and_modify(|node| {
                 if let Node::File(content) = node {
                     content.extend(buf.as_ref())
-                }  else {
+                } else {
                     panic!("Path is not a file {:?}", path.as_ref());
                 }
-            )
-            .or_insert( Node::File(buf.as_ref().to_vec()));
+            })
+            .or_insert(Node::File(buf.as_ref().to_vec()));
 
         Ok(len)
     }
 
-    fn open_write<'a, P: AsRef<Path>>(&'a self, path: P) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
-        if self.is_directory(path.as_ref()) { panic!("open_write: Path is not a file ! {:?}", path.as_ref()); }
+    fn open_write<'a, P: AsRef<Path>>(
+        &'a self,
+        path: P,
+    ) -> packster_core::Result<Box<dyn Write + Send + Sync + 'a>> {
+        if self.is_directory(path.as_ref()) {
+            panic!("open_write: Path is not a file ! {:?}", path.as_ref());
+        }
 
-        Ok(
-            Box::new(
-                InMemoryFile {
-                    fs: self,
-                    path: path.as_ref().to_path_buf()
-                }
-            )
-        )
+        Ok(Box::new(InMemoryFile {
+            fs: self,
+            path: path.as_ref().to_path_buf(),
+        }))
     }
 
     fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> packster_core::Result<()> {
-        if ! self.exists(path.as_ref()) { panic!("remove_dir_all: Path not found ! {:?}", path.as_ref()); }
-        if ! self.is_directory(path.as_ref()) { panic!("remove_dir_all: Path is not a directory ! {:?}", path.as_ref()); }
-        let paths_to_delete : Vec<PathBuf> = self.walk(path.as_ref())
-            .map(|entry_result|
-                entry_result.map(|entry|
-                    entry.as_path().to_path_buf()
-                )
-            )
+        if !self.exists(path.as_ref()) {
+            panic!("remove_dir_all: Path not found ! {:?}", path.as_ref());
+        }
+        if !self.is_directory(path.as_ref()) {
+            panic!(
+                "remove_dir_all: Path is not a directory ! {:?}",
+                path.as_ref()
+            );
+        }
+        let paths_to_delete: Vec<PathBuf> = self
+            .walk(path.as_ref())
+            .map(|entry_result| entry_result.map(|entry| entry.as_path().to_path_buf()))
             .collect::<Result<_>>()?;
 
         let mut btree_lock = self.0.write().unwrap();
@@ -203,12 +268,12 @@ impl FileSystem for InMemoryFileSystem {
     }
 }
 
-pub struct InMemoryFile<'a>{
+pub struct InMemoryFile<'a> {
     fs: &'a InMemoryFileSystem,
-    path: PathBuf
+    path: PathBuf,
 }
 
-impl <'a>Write for InMemoryFile<'a> {
+impl<'a> Write for InMemoryFile<'a> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         io::Result::Ok(self.fs.append(&self.path, buf).unwrap())
     }
@@ -219,7 +284,12 @@ impl <'a>Write for InMemoryFile<'a> {
 }
 
 impl Archiver for InMemoryFileSystem {
-    fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, filesystem: &F, project_path: Absolute<P1>, archive_path: Absolute<P2>) -> Result<()> {
+    fn archive<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(
+        &self,
+        filesystem: &F,
+        project_path: Absolute<P1>,
+        archive_path: Absolute<P2>,
+    ) -> Result<()> {
         filesystem.create(archive_path.as_ref())?;
 
         for found_entry_result in filesystem.walk(project_path.as_ref()) {
@@ -239,12 +309,17 @@ impl Archiver for InMemoryFileSystem {
         Ok(())
     }
 
-    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(&self, _filesystem: &F, _expand_path: Absolute<P1>, _archive_path: Absolute<P2>) -> Result<()> {
+    fn extract<F: FileSystem, P1: AsRef<Path>, P2: AsRef<Path>>(
+        &self,
+        _filesystem: &F,
+        _expand_path: Absolute<P1>,
+        _archive_path: Absolute<P2>,
+    ) -> Result<()> {
         unimplemented!()
     }
 }
 
 pub struct InMemoryDirEntry<'a> {
     fs: &'a InMemoryFileSystem,
-    path: PathBuf
+    path: PathBuf,
 }

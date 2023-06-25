@@ -1,84 +1,13 @@
-use std::{ path::Path, fmt, str::FromStr };
+
+use core::str::FromStr;
+use std::path::Path;
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
 use regex::Regex;
 use hex;
 
-use crate::{ Result, Error, PACKAGE_EXTENSION };
+use crate::{ Result, Error, domain::entity::{Identifier, Version, Checksum}, packaging::PACKAGE_EXTENSION };
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct Identifier(String);
-
-impl FromStr for Identifier {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self> {
-        Ok(Identifier(s.to_string())) //TODO proper identifier validation
-    }
-}
-
-impl fmt::Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct Version(String);
-
-impl Version {
-    pub fn new<S: AsRef<str>>(version_str: S) -> Self {
-        Version(version_str.as_ref().to_owned())
-    }
-
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
-    }
-}
-
-impl fmt::Display for Version {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl FromStr for Version {
-    type Err = Error;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(Version(s.to_string())) //TODO enforce semver through Version type ( from_str )
-    }
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
-pub struct Checksum(
-    #[serde(with = "hex")]
-    Vec<u8>
-);
-
-impl FromStr for Checksum {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self> {
-        Ok(hex::decode(s).map(Checksum)?)
-    }
-}
-
-impl ToString for Checksum {
-    fn to_string(&self) -> String {
-        hex::encode(&self.0)
-    }
-}
-
-impl AsRef<[u8]> for Checksum {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
-impl From<Vec<u8>> for Checksum {
-    fn from(value: Vec<u8>) -> Self {
-        Checksum(value)
-    }
-}
 #[derive(Deserialize)]
 pub struct Project {
     identifier: Identifier,
@@ -87,11 +16,11 @@ pub struct Project {
 
 impl Project {
     pub fn as_identifier(&self) -> &str {
-        &self.identifier.0
+        self.identifier.as_ref()
     }
 
     pub fn as_version(&self) -> &str {
-        &self.version.0
+        self.version.as_ref()
     }
 }
 
