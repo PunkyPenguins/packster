@@ -403,7 +403,7 @@ dependencies = [
 
 [[package]]
 name = "packster-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "clap",
  "packster-core",
@@ -412,7 +412,7 @@ dependencies = [
 
 [[package]]
 name = "packster-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "lazy_static",
@@ -423,7 +423,7 @@ dependencies = [
 
 [[package]]
 name = "packster-infrastructure"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flate2",
  "hex",
@@ -439,7 +439,7 @@ dependencies = [
 
 [[package]]
 name = "packster-test"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "indoc",

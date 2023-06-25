@@ -9,7 +9,7 @@ pub struct PackCommand {
     #[arg(value_parser=try_from_current_dir)]
     pub project_workspace: Absolute<PathBuf>,
 
-    #[arg(value_parser=try_from_current_dir)]
+    #[arg(value_parser=try_from_current_dir, default_value="." )]
     pub package_output_directory: Absolute<PathBuf>
 }
 
