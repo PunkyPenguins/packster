@@ -90,7 +90,8 @@ impl CommandLine {
                         .parse_location_lockfile(&StdFileSystem, &Json)?
                         .probe_package_already_deployed_in_location()?
                         .guess_deployment_path()
-                        .update_location_lockfile(&StdFileSystem, &Json)?
+                        .remove_deployment_from_location()
+                        .persist_location_lockfile(&StdFileSystem, &Json)?
                         .delete_deployment_directory(&StdFileSystem)
                         .map(|operation|
                             println!(

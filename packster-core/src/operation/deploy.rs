@@ -45,8 +45,10 @@ impl <S: AsPackage>AsChecksum for DeployOperation<S> {
 
 pub type DeployValidState = DeploymentPath<MatchingChecksum<NotYetDeployed<ParsedLocation<ParsedPackage<New>>>>>;
 
-impl DeployValidState {
-    fn as_mut_location(&mut self) -> &mut DeployLocation { &mut self.previous_state.previous_state.previous_state.location }
+impl AsMut<DeployLocation> for DeployValidState {
+    fn as_mut(&mut self) -> &mut DeployLocation {
+        &mut self.previous_state.previous_state.previous_state.location
+    }
 }
 
 pub struct ExtractedPackage {
@@ -75,7 +77,7 @@ impl DeployOperation<ExtractedPackage> {
         let package = self.state.previous_state.as_package();
         let deployment: Deployment = Deployment::new(package.clone());
 
-        let location = &mut self.state.previous_state.as_mut_location();
+        let location = &mut self.state.previous_state.as_mut();
         location.add_deployment(deployment.clone());
 
         let deploy_location_file_content = serializer.serialize(&location)?;

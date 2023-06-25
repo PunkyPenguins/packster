@@ -224,7 +224,8 @@ fn test_undeploy_existing_deployment() -> Result<()> {
         .parse_location_lockfile(&filesystem, &Json)?
         .probe_package_already_deployed_in_location()?
         .guess_deployment_path()
-        .update_location_lockfile(&filesystem, &Json)?
+        .remove_deployment_from_location()
+        .persist_location_lockfile(&filesystem, &Json)?
         .delete_deployment_directory(&filesystem)?
     ;
 

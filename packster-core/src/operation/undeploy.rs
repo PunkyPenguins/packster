@@ -1,8 +1,8 @@
 use std::path::{PathBuf, Path};
 
-use crate::{domain::{Checksum, Deployment}, path::Absolute, port::{FileSystem, Serializer}, Result};
+use crate::{domain::{Checksum, Deployment, DeployLocation}, path::Absolute, port::FileSystem, Result};
 
-use super::{Operation, AsLocationPath, AsChecksum, AlreadyDeployed, ParsedLocation, New, DeploymentPath};
+use super::{Operation, AsLocationPath, AsChecksum, AlreadyDeployed, ParsedLocation, New, DeploymentPath, UpdatedDeployLocation, PersistedDeployLocation};
 
 pub struct UndeployRequest {
     checksum: Checksum,
@@ -27,29 +27,32 @@ impl <S>AsLocationPath for UndeployOperation<S> {
 
 pub type UndeployValidState = DeploymentPath<AlreadyDeployed<ParsedLocation<New>>>;
 
-pub struct UndeployedDeployment {
-    previous_state: UndeployValidState
-}
 
 impl UndeployOperation<UndeployValidState> {
-    pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(mut self, filesystem: &F, serializer: &Sr) -> Result<UndeployOperation<UndeployedDeployment>> {
+    fn as_mut_location(&mut self) -> &mut DeployLocation {
+        &mut self.state.previous_state.previous_state.location
+    }
+
+    pub fn remove_deployment_from_location(mut self) -> UndeployOperation<UpdatedDeployLocation<UndeployValidState>> {
         let checksum = self.as_checksum().clone();
-        let location = &mut self.state.previous_state.previous_state.location;
+        let location = self.as_mut_location();
         location.remove_deployment(&checksum);
 
-        let deploy_location_file_content = serializer.serialize(&location)?;
-        let lockfile_location = self.to_location_lockfile_path();
-        filesystem.write_all(lockfile_location, deploy_location_file_content.as_bytes())?;
+        Self::with_state(self.request, UpdatedDeployLocation { previous_state: self.state })
+    }
+}
 
-        Self::ok_with_state(self.request, UndeployedDeployment { previous_state: self.state })
+impl AsRef<DeployLocation> for UndeployOperation<UpdatedDeployLocation<UndeployValidState>> {
+    fn as_ref(&self) -> &DeployLocation {
+        &self.state.previous_state.previous_state.previous_state.location
     }
 }
 
 pub struct DeploymentDirectoryDeleted {
-    previous_state: UndeployedDeployment
+    previous_state: PersistedDeployLocation<UndeployValidState>
 }
 
-impl UndeployOperation<UndeployedDeployment> {
+impl UndeployOperation<PersistedDeployLocation<UndeployValidState>> {
     pub fn delete_deployment_directory<F: FileSystem>(self, filesystem: &F) -> Result<UndeployOperation<DeploymentDirectoryDeleted>> {
         filesystem.remove_dir_all(&self.state.previous_state.deployment_path)?;
         Self::ok_with_state(self.request, DeploymentDirectoryDeleted { previous_state: self.state })
