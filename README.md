@@ -77,3 +77,9 @@ cargo run -- init-location --location-directory mylocation
 ```
 
 You'd then see a lockfile named `packster.lock` inside `mylocation`
+
+
+
+Deployment
+Source
+Dependency

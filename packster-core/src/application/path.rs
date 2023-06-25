@@ -1,8 +1,10 @@
-use std::{path::{PathBuf, Path, Component}, ffi::OsStr, ops::Deref};
-
+use std::{
+    path::{PathBuf, Path, Component},
+    ffi::OsStr,
+    ops::Deref
+};
 use serde::{Serialize, Deserialize};
-
-use crate::{Result, Error, port::PathExt};
+use crate::{Result, Error, application::port::PathExt};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct NormalizedPathBuf(PathBuf);
@@ -41,6 +43,7 @@ pub fn normalize_path<P: AsRef<Path>>(path_ref: P) -> PathBuf { //TODO MORE UT
 
     buffer
 }
+
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug, Deserialize, Serialize)]
 pub struct Absolute<T: AsRef<Path>>(T);
@@ -107,6 +110,7 @@ impl From<Absolute<PathBuf>> for PathBuf {
     }
 }
 
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Relative<T: AsRef<Path>>(T);
 
@@ -155,6 +159,7 @@ impl PathExt for &Path {
         NormalizedPathBuf::from(*self)
     }
 }
+
 
 #[cfg(test)]
 mod test {

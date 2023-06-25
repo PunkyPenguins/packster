@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use clap::{Args};
-use packster_core::{Result, Error, operation::UndeployRequest, path::Absolute, domain::Checksum};
+use packster_core::{Result, Error, packaging::application::UndeployRequest, domain::entity::Checksum, application::path::Absolute};
 use crate::parse::try_from_current_dir;
 
 #[derive(Args)]

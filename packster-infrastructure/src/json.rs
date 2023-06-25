@@ -1,7 +1,9 @@
-use packster_core::{Result, port::{Parser, Serializer}};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{ from_str, to_string } ;
-
+use serde_json::{from_str, to_string};
+use packster_core::{
+    application::port::{Parser, Serializer},
+    Result,
+};
 use crate::Error;
 
 pub struct Json;

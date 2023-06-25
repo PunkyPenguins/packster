@@ -5,7 +5,7 @@
 use std::println;
 
 use clap::{Parser, Subcommand};
-use packster_core::{operation::*, Result};
+use packster_core::{Result, application::operation::{Operation, AsChecksum}, packaging::application::*};
 use packster_infrastructure::{
     StdFileSystem,
     Toml,
@@ -23,7 +23,6 @@ mod undeploy;
 mod show_location;
 
 pub const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 
 fn main() {
     std::process::exit(
@@ -57,7 +56,7 @@ impl CommandLine {
                         .finalize(&StdFileSystem, CRATE_VERSION)
                         .map(
                             |operation|
-                                println!("Package created : {}", operation.get_state().to_file_name())
+                                println!("Package created : {}", operation.as_state().to_file_name())
                         )?
                 ,
                 Command::InitLocation(init_location_command) =>
@@ -76,7 +75,8 @@ impl CommandLine {
                         .validate_package_checksum(&StdFileSystem, &Sha2Digester::Sha256)?
                         .guess_deployment_path()
                         .extract_package(&StdFileSystem, &TarballArchiver)?
-                        .update_location_lockfile(&StdFileSystem, &Json)
+                        .add_deployment_to_location()
+                        .persist_location_lockfile(&StdFileSystem, &Json)
                         .map(|operation|
                             println!(
                                 "Package {} deployed in {}",
@@ -90,7 +90,8 @@ impl CommandLine {
                         .parse_location_lockfile(&StdFileSystem, &Json)?
                         .probe_package_already_deployed_in_location()?
                         .guess_deployment_path()
-                        .update_location_lockfile(&StdFileSystem, &Json)?
+                        .remove_deployment_from_location()
+                        .persist_location_lockfile(&StdFileSystem, &Json)?
                         .delete_deployment_directory(&StdFileSystem)
                         .map(|operation|
                             println!(
