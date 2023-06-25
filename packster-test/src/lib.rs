@@ -118,7 +118,8 @@ fn test_deployment_new_package() -> Result<()> {
         .validate_package_checksum(&filesystem, &Sha2Digester::Sha256)?
         .guess_deployment_path()
         .extract_package(&filesystem, &TarballArchiver)?
-        .update_location_lockfile(&filesystem, &Json)?;
+        .add_deployment_to_location()
+        .persist_location_lockfile(&filesystem, &Json)?;
 
     assert!(filesystem.exists("/my/location/d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"));
     assert!(filesystem.is_directory("/my/location/d829752c10db8f7a98c939b5418beb0a360c6a6b818830e000f2c5a8dce35af4"));

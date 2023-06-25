@@ -27,7 +27,6 @@ impl <S>AsLocationPath for UndeployOperation<S> {
 
 pub type UndeployValidState = DeploymentPath<AlreadyDeployed<ParsedLocation<New>>>;
 
-
 impl UndeployOperation<UndeployValidState> {
     fn as_mut_location(&mut self) -> &mut DeployLocation {
         &mut self.state.previous_state.previous_state.location

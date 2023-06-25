@@ -76,7 +76,8 @@ impl CommandLine {
                         .validate_package_checksum(&StdFileSystem, &Sha2Digester::Sha256)?
                         .guess_deployment_path()
                         .extract_package(&StdFileSystem, &TarballArchiver)?
-                        .update_location_lockfile(&StdFileSystem, &Json)
+                        .add_deployment_to_location()
+                        .persist_location_lockfile(&StdFileSystem, &Json)
                         .map(|operation|
                             println!(
                                 "Package {} deployed in {}",

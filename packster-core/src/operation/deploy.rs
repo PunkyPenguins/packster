@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{port::{FileSystem, Archiver, Serializer}, domain::{Package, Deployment, DeployLocation, Checksum}, Result, path::Absolute};
+use crate::{port::{FileSystem, Archiver}, domain::{Package, Deployment, DeployLocation, Checksum}, Result, path::Absolute};
 
 use super::{
     Operation,
@@ -14,7 +14,7 @@ use super::{
     DeploymentPath,
     AsChecksum,
     AsPackage,
-    AsLocation
+    UpdatedDeployLocation, PersistedDeployLocation
 };
 
 pub struct DeployRequest {
@@ -55,7 +55,6 @@ pub struct ExtractedPackage {
     previous_state: DeployValidState
 }
 
-//An emerging good practise here : keep read operations as generic as possible and write operation as specific as possible
 impl DeployOperation<DeployValidState> {
     pub fn extract_package<F: FileSystem, A: Archiver>(self, filesystem: &F, archiver: &A) -> Result<DeployOperation<ExtractedPackage>> {
         archiver.extract(
@@ -73,24 +72,34 @@ pub struct DeployedDeployment {
 }
 
 impl DeployOperation<ExtractedPackage> {
-    pub fn update_location_lockfile<F: FileSystem, Sr: Serializer>(mut self, filesystem: &F, serializer: &Sr) -> Result<DeployOperation<DeployedDeployment>> {
+    fn as_mut_location(&mut self) -> &mut DeployLocation {
+        &mut self.state.previous_state.previous_state.previous_state.previous_state.location
+    }
+
+    pub fn add_deployment_to_location(mut self) -> DeployOperation<UpdatedDeployLocation<DeployedDeployment>> {
         let package = self.state.previous_state.as_package();
         let deployment: Deployment = Deployment::new(package.clone());
 
-        let location = &mut self.state.previous_state.as_mut();
+        let location = self.as_mut_location();
         location.add_deployment(deployment.clone());
 
-        let deploy_location_file_content = serializer.serialize(&location)?;
-        let lockfile_location = self.to_location_lockfile_path();
-        filesystem.write_all(lockfile_location, deploy_location_file_content.as_bytes())?;
-
-        Self::ok_with_state(self.request, DeployedDeployment { previous_state: self.state, deployment })
+        Self::with_state(
+            self.request,
+            UpdatedDeployLocation {
+                previous_state: DeployedDeployment { previous_state: self.state, deployment }
+            }
+        )
     }
 }
 
-impl DeployOperation<DeployedDeployment> {
-    pub fn as_deploy_path(&self) -> Absolute<&Path> { self.state.previous_state.previous_state.deployment_path.as_absolute_path() }
-    pub fn as_location(&self) -> &DeployLocation { self.state.previous_state.previous_state.as_location() }
-    pub fn as_deployment(&self) -> &Deployment { &self.state.deployment }
-    pub fn as_package(&self) -> &Package { self.state.previous_state.previous_state.as_package() }
+impl AsRef<DeployLocation> for DeployOperation<UpdatedDeployLocation<DeployedDeployment>> {
+    fn as_ref(&self) -> &DeployLocation {
+        &self.state.previous_state.previous_state.previous_state.previous_state.previous_state.previous_state.location
+    }
+}
+
+impl DeployOperation<PersistedDeployLocation<DeployedDeployment>> {
+    pub fn as_deploy_path(&self) -> Absolute<&Path> { self.state.previous_state.previous_state.previous_state.deployment_path.as_absolute_path() }
+    pub fn as_deployment(&self) -> &Deployment { &self.state.previous_state.deployment }
+    pub fn as_package(&self) -> &Package { self.state.previous_state.previous_state.previous_state.as_package() }
 }
